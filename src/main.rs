@@ -9,7 +9,7 @@ use axum::{Router, routing::get};
 use std::{env, net::SocketAddr};
 use dotenvy::dotenv;
 use sqlx::{mysql::MySqlPoolOptions, migrate::Migrator};
-use tracing_subscriber;
+use tracing_subscriber::{fmt, EnvFilter};
 
 static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
 
@@ -24,8 +24,12 @@ async fn main() -> Result<(), sqlx::Error> {
     dotenv().ok();
 
     tracing_subscriber::fmt()
-        .with_env_filter("info")
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_target(true)
+        .compact()
         .init();
+
+    tracing::info!("Environment variables loaded.");
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let pool = MySqlPoolOptions::new()
@@ -34,23 +38,30 @@ async fn main() -> Result<(), sqlx::Error> {
         .await?;
 
     MIGRATOR.run(&pool).await?;
+    tracing::info!("Migrations applied. DB is ready.");
 
-    tracing::info!("Migrations applied. Starting StatusPulse server...");
+    let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
 
     let state = AppState {
         db: pool,
-        jwt_secret: env::var("JWT_SECRET").expect("JWT_SECRET must be set"),
+        jwt_secret,
     };
 
     let app = Router::new()
-        .nest("/auth", routes::auth_routes())
-        .nest("/api", routes::monitor_routes::monitor_routes())
+        .nest(
+            "/api",
+            routes::monitor_routes::monitor_routes().with_state(state.clone())
+        )
+        .nest(
+            "/auth",
+            routes::auth_routes().with_state(state.clone())
+        )
         .route("/health", get(health_check))
-        .with_state(state.clone());
+        .with_state(state);
 
 
     let addr: SocketAddr = "0.0.0.0:3000".parse().unwrap();
-    tracing::info!("Listening on {}", addr);
+    tracing::info!("StatusPulse is listening on {}", addr);
 
     axum::serve(tokio::net::TcpListener::bind(addr).await?, app)
         .await
