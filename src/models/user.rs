@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 use sqlx::FromRow;
-use chrono::{DateTime, Utc};
+use sqlx::types::time::OffsetDateTime;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct User {
@@ -9,5 +9,5 @@ pub struct User {
     pub name: String,
     pub email: String,
     pub password_hash: String,
-    pub created_at: DateTime<Utc>,
+    pub created_at: Option<OffsetDateTime>,
 }
