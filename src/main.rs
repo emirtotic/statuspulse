@@ -1,3 +1,5 @@
+mod models;
+
 use axum::{Router, routing::get, serve};
 use std::{env, net::SocketAddr};
 use dotenvy::dotenv;
