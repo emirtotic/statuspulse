@@ -1,5 +1,4 @@
 use crate::db::user_repository::UserRepository;
-use crate::models::user::User;
 use sqlx::MySqlPool;
 use argon2::{Argon2, PasswordHash, PasswordVerifier, password_hash::SaltString, PasswordHasher};
 use jsonwebtoken::{encode, Header, EncodingKey};
@@ -26,22 +25,48 @@ impl<'a> AuthService<'a> {
         }
     }
 
-    pub async fn register_user(&self, name: &str, email: &str, password: &str) -> Result<u64, sqlx::Error> {
+    /// REGISTER user (with JWT response)
+    pub async fn register_user(&self, name: &str, email: &str, password: &str) -> Result<String, &'static str> {
+        // Check if user already exists
+        if let Ok(Some(_)) = self.repo.get_by_email(email).await {
+            return Err("User already exists");
+        }
+
+        // Hash password with Argon2
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
         let password_hash = argon2.hash_password(password.as_bytes(), &salt)
-            .expect("Failed to hash password")
+            .map_err(|_| "Failed to hash password")?
             .to_string();
 
-        let user_id = self.repo.create_user(name, email, &password_hash).await?;
-        Ok(user_id)
+        // Insert user into DB
+        let user_id = self.repo.create_user(name, email, &password_hash)
+            .await
+            .map_err(|_| "Failed to create user")?;
+
+        // Generate JWT token
+        let claims = Claims {
+            sub: user_id.to_string(),
+            exp: (Utc::now() + Duration::hours(24)).timestamp() as usize,
+        };
+
+        let token = encode(
+            &Header::default(),
+            &claims,
+            &EncodingKey::from_secret(self.jwt_secret.as_bytes()),
+        ).map_err(|_| "Failed to create token")?;
+
+        Ok(token)
     }
 
+    /// LOGIN user (return JWT token)
     pub async fn login_user(&self, email: &str, password: &str) -> Result<String, &'static str> {
+        // Find user by email
         let user = self.repo.get_by_email(email).await
             .map_err(|_| "Database error")?
             .ok_or("Invalid credentials")?;
 
+        // Verify password hash
         let parsed_hash = PasswordHash::new(&user.password_hash)
             .map_err(|_| "Invalid stored hash")?;
 
@@ -52,13 +77,17 @@ impl<'a> AuthService<'a> {
             return Err("Invalid credentials");
         }
 
+        // Generate JWT token
         let claims = Claims {
             sub: user.id.to_string(),
             exp: (Utc::now() + Duration::hours(24)).timestamp() as usize,
         };
 
-        let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(self.jwt_secret.as_bytes()))
-            .map_err(|_| "Failed to create token")?;
+        let token = encode(
+            &Header::default(),
+            &claims,
+            &EncodingKey::from_secret(self.jwt_secret.as_bytes()),
+        ).map_err(|_| "Failed to create token")?;
 
         Ok(token)
     }
