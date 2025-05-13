@@ -1,5 +1,6 @@
 use crate::models::monitor::Monitor;
 use sqlx::{MySqlPool, Row};
+use crate::models::user::User;
 
 pub struct MonitorRepository<'a> {
     pub pool: &'a MySqlPool,
@@ -241,6 +242,33 @@ impl<'a> MonitorRepository<'a> {
         Ok(monitors)
     }
 
+    pub async fn get_monitor_owner(&self, monitor_id: u64) -> Result<Option<User>, sqlx::Error> {
+        tracing::info!("Querying monitor owner for monitor_id: {}", monitor_id);
 
+        let row = sqlx::query(
+            r#"
+        SELECT users.id, users.name, users.email, users.password_hash, users.created_at
+        FROM users
+        JOIN monitors ON monitors.user_id = users.id
+        WHERE monitors.id = ?
+        "#
+        )
+            .bind(monitor_id)
+            .fetch_optional(self.pool)
+            .await?;
+
+        if let Some(row) = row {
+            let user = User {
+                id: row.try_get("id").unwrap(),
+                name: row.try_get("name").unwrap(),
+                email: row.try_get("email").unwrap(),
+                password_hash: row.try_get("password_hash").unwrap(),
+                created_at: row.try_get("created_at").ok(),
+            };
+            Ok(Some(user))
+        } else {
+            Ok(None)
+        }
+    }
 
 }

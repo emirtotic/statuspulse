@@ -25,3 +25,5 @@ jsonwebtoken = "9"
 hyper = { version = "1.0", features = ["full"] }
 rand_core = "0.6.4"
 futures = "0.3"
+sendgrid = { version = "0.11", features = ["async"] }
+

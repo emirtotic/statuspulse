@@ -1,5 +1,6 @@
 use crate::{
     db::{monitor_repository::MonitorRepository, status_log_repository::StatusLogRepository, alert_sent_repository::AlertSentRepository},
+    services::sendgrid_service::SendGridService,
     AppState,
 };
 use reqwest::Client;
@@ -12,9 +13,15 @@ use time::{OffsetDateTime, Duration as TimeDuration};
 pub async fn start_worker(state: AppState) {
     tokio::spawn(async move {
         let client = Client::new();
-        let monitor_repo = MonitorRepository::new(&state.db);
+
+        let monitor_repo = Arc::new(MonitorRepository::new(&state.db));
         let status_log_repo = Arc::new(StatusLogRepository::new(&state.db));
         let alerts_repo = Arc::new(AlertSentRepository::new(&state.db));
+
+        let sendgrid_service = Arc::new(SendGridService::new(
+            std::env::var("SENDGRID_API_KEY").expect("SENDGRID_API_KEY must be set"),
+            std::env::var("SENDGRID_FROM_EMAIL").expect("SENDGRID_FROM_EMAIL must be set"),
+        ));
 
         loop {
             info!("Starting monitor ping cycle...");
@@ -25,8 +32,10 @@ pub async fn start_worker(state: AppState) {
 
                     let tasks = monitors.into_iter().map(|monitor| {
                         let client = client.clone();
+                        let monitor_repo = Arc::clone(&monitor_repo);
                         let status_log_repo = Arc::clone(&status_log_repo);
                         let alerts_repo = Arc::clone(&alerts_repo);
+                        let sendgrid_service = Arc::clone(&sendgrid_service);
 
                         async move {
                             let url = monitor.url.clone();
@@ -71,22 +80,42 @@ pub async fn start_worker(state: AppState) {
                                     // ALERT LOGIC
                                     let since = OffsetDateTime::now_utc() - TimeDuration::minutes(15);
 
-                                    match alerts_repo.was_recently_sent(monitor_id, "email", since).await {
-                                        Ok(false) => {
-                                            if let Err(e) = send_alert_email(&url).await {
-                                                error!("Failed to send alert email: {:?}", e);
-                                            } else {
-                                                // Insert alert log
-                                                if let Err(e) = alerts_repo.insert_alert(monitor_id, "email", "sendgrid").await {
-                                                    error!("Failed to insert alert log: {:?}", e);
+                                    match monitor_repo.get_monitor_owner(monitor_id).await {
+                                        Ok(Some(user)) => {
+                                            match alerts_repo.was_recently_sent(monitor_id, "email", since).await {
+                                                Ok(false) => {
+                                                    let subject = format!("Monitor DOWN: {}", monitor.label);
+                                                    let body = format!(
+                                                        "Dear {},\n\nMonitor [{}] ({}) is DOWN and cannot be reached.\n\nStatusPulse App",
+                                                        user.name,
+                                                        monitor.label,
+                                                        monitor.url
+                                                    );
+
+                                                    if let Err(e) = sendgrid_service
+                                                        .send_alert(&user.email, &subject, &body)
+                                                        .await
+                                                    {
+                                                        error!("Failed to send alert email: {:?}", e);
+                                                    } else {
+                                                        if let Err(e) = alerts_repo.insert_alert(monitor_id, "email", "sendgrid").await {
+                                                            error!("Failed to insert alert log: {:?}", e);
+                                                        }
+                                                    }
+                                                }
+                                                Ok(true) => {
+                                                    info!("Alert already sent recently for monitor_id {}", monitor_id);
+                                                }
+                                                Err(e) => {
+                                                    error!("Failed to check recent alerts: {:?}", e);
                                                 }
                                             }
                                         }
-                                        Ok(true) => {
-                                            info!("Alert already sent recently for monitor_id {}", monitor_id);
+                                        Ok(None) => {
+                                            error!("No user found for monitor_id {}", monitor_id);
                                         }
                                         Err(e) => {
-                                            error!("Failed to check recent alerts: {:?}", e);
+                                            error!("Failed to fetch monitor owner: {:?}", e);
                                         }
                                     }
                                 }
@@ -101,18 +130,8 @@ pub async fn start_worker(state: AppState) {
                 }
             }
 
-            // Sleep before next ping cycle
             info!("Sleeping before next cycle...");
-            sleep(Duration::from_secs(1000)).await;
+            sleep(Duration::from_secs(900)).await;
         }
     });
-}
-
-// Dummy implementation, zameni kasnije pravim SendGrid pozivom
-async fn send_alert_email(url: &str) -> Result<(), reqwest::Error> {
-    info!("Sending alert email for down monitor: {}", url);
-
-    // Simulacija API poziva
-    // TODO: ovde ide tvoj pravi SendGrid poziv
-    Ok(())
 }
