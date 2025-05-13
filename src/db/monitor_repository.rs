@@ -61,7 +61,7 @@ impl<'a> MonitorRepository<'a> {
             .execute(self.pool)
             .await?;
 
-        tracing::info!("✅ Monitor created with id: {}", result.last_insert_id());
+        tracing::info!("Monitor created with id: {}", result.last_insert_id());
 
         Ok(result.last_insert_id())
     }
@@ -81,9 +81,9 @@ impl<'a> MonitorRepository<'a> {
             .await?;
 
         if result.rows_affected() > 0 {
-            tracing::info!("✅ Deleted monitor_id: {}", monitor_id);
+            tracing::info!("Deleted monitor_id: {}", monitor_id);
         } else {
-            tracing::warn!("⚠️ No monitor found to delete with id: {}", monitor_id);
+            tracing::warn!("No monitor found to delete with id: {}", monitor_id);
         }
 
         Ok(result.rows_affected())
@@ -117,9 +117,9 @@ impl<'a> MonitorRepository<'a> {
             .await?;
 
         if result.rows_affected() > 0 {
-            tracing::info!("✅ Updated monitor_id: {}", monitor_id);
+            tracing::info!("Updated monitor_id: {}", monitor_id);
         } else {
-            tracing::warn!("⚠️ No monitor found to update with id: {}", monitor_id);
+            tracing::warn!("No monitor found to update with id: {}", monitor_id);
         }
 
         Ok(result.rows_affected())
@@ -155,4 +155,92 @@ impl<'a> MonitorRepository<'a> {
             Ok(None)
         }
     }
+
+    pub async fn get_all_active(&self) -> Result<Vec<Monitor>, sqlx::Error> {
+        tracing::info!("Fetching all active monitors...");
+
+        let monitors = sqlx::query_as!(
+        Monitor,
+        r#"
+        SELECT
+            id,
+            user_id,
+            label,
+            url,
+            interval_mins,
+            is_active as "is_active: bool",
+            created_at
+        FROM monitors
+        WHERE is_active = true
+        "#
+    )
+            .fetch_all(self.pool)
+            .await?;
+
+        Ok(monitors)
+    }
+
+
+    pub async fn get_all_inactive_monitors(&self, user_id: u64) -> Result<Vec<Monitor>, sqlx::Error> {
+        tracing::info!("Querying inactive monitors for user_id: {}", user_id);
+
+        let rows = sqlx::query(
+            r#"
+            SELECT id, user_id, label, url, interval_mins, is_active, created_at
+            FROM monitors
+            WHERE user_id = ?
+            AND is_active = false
+            "#
+        )
+            .bind(user_id)
+            .fetch_all(self.pool)
+            .await?;
+
+        let monitors = rows.into_iter().map(|row| {
+            Monitor {
+                id: row.try_get("id").unwrap(),
+                user_id: row.try_get("user_id").unwrap(),
+                label: row.try_get("label").unwrap(),
+                url: row.try_get("url").unwrap(),
+                interval_mins: row.try_get("interval_mins").unwrap(),
+                is_active: row.try_get("is_active").unwrap(),
+                created_at: row.try_get("created_at").ok(),
+            }
+        }).collect();
+
+        Ok(monitors)
+    }
+
+    pub async fn get_all_active_monitors(&self, user_id: u64) -> Result<Vec<Monitor>, sqlx::Error> {
+        tracing::info!("Querying active monitors for user_id: {}", user_id);
+
+        let rows = sqlx::query(
+            r#"
+            SELECT id, user_id, label, url, interval_mins, is_active, created_at
+            FROM monitors
+            WHERE user_id = ?
+            AND is_active = true
+            "#
+        )
+            .bind(user_id)
+            .fetch_all(self.pool)
+            .await?;
+
+        let monitors = rows.into_iter().map(|row| {
+            Monitor {
+                id: row.try_get("id").unwrap(),
+                user_id: row.try_get("user_id").unwrap(),
+                label: row.try_get("label").unwrap(),
+                url: row.try_get("url").unwrap(),
+                interval_mins: row.try_get("interval_mins").unwrap(),
+                is_active: row.try_get("is_active").unwrap(),
+                created_at: row.try_get("created_at").ok(),
+            }
+        }).collect();
+
+        Ok(monitors)
+    }
+
+
+
 }

@@ -24,3 +24,4 @@ jsonwebtoken = "9"
 # Dodaj ovo:
 hyper = { version = "1.0", features = ["full"] }
 rand_core = "0.6.4"
+futures = "0.3"

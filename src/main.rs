@@ -10,6 +10,7 @@ use std::{env, net::SocketAddr};
 use dotenvy::dotenv;
 use sqlx::{mysql::MySqlPoolOptions, migrate::Migrator};
 use tracing_subscriber::{fmt, EnvFilter};
+use services::worker;
 
 static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
 
@@ -46,6 +47,9 @@ async fn main() -> Result<(), sqlx::Error> {
         db: pool,
         jwt_secret,
     };
+
+    // Start ping worker in background
+    tokio::spawn(worker::start_worker(state.clone()));
 
     let app = Router::new()
         .nest(
