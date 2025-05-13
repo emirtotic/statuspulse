@@ -1,17 +1,20 @@
-use crate::{db::monitor_repository::MonitorRepository, db::status_log_repository::StatusLogRepository, AppState};
+use crate::{
+    db::{monitor_repository::MonitorRepository, status_log_repository::StatusLogRepository, alert_sent_repository::AlertSentRepository},
+    AppState,
+};
 use reqwest::Client;
 use std::{sync::Arc, time::Instant};
 use tokio::time::{sleep, Duration};
 use tracing::{info, error};
 use futures::future::join_all;
+use time::{OffsetDateTime, Duration as TimeDuration};
 
 pub async fn start_worker(state: AppState) {
-
     tokio::spawn(async move {
-
         let client = Client::new();
         let monitor_repo = MonitorRepository::new(&state.db);
         let status_log_repo = Arc::new(StatusLogRepository::new(&state.db));
+        let alerts_repo = Arc::new(AlertSentRepository::new(&state.db));
 
         loop {
             info!("Starting monitor ping cycle...");
@@ -23,6 +26,7 @@ pub async fn start_worker(state: AppState) {
                     let tasks = monitors.into_iter().map(|monitor| {
                         let client = client.clone();
                         let status_log_repo = Arc::clone(&status_log_repo);
+                        let alerts_repo = Arc::clone(&alerts_repo);
 
                         async move {
                             let url = monitor.url.clone();
@@ -63,6 +67,28 @@ pub async fn start_worker(state: AppState) {
                                     ).await {
                                         error!("Failed to insert error log: {:?}", e);
                                     }
+
+                                    // ALERT LOGIC
+                                    let since = OffsetDateTime::now_utc() - TimeDuration::minutes(15);
+
+                                    match alerts_repo.was_recently_sent(monitor_id, "email", since).await {
+                                        Ok(false) => {
+                                            if let Err(e) = send_alert_email(&url).await {
+                                                error!("Failed to send alert email: {:?}", e);
+                                            } else {
+                                                // Insert alert log
+                                                if let Err(e) = alerts_repo.insert_alert(monitor_id, "email", "sendgrid").await {
+                                                    error!("Failed to insert alert log: {:?}", e);
+                                                }
+                                            }
+                                        }
+                                        Ok(true) => {
+                                            info!("Alert already sent recently for monitor_id {}", monitor_id);
+                                        }
+                                        Err(e) => {
+                                            error!("Failed to check recent alerts: {:?}", e);
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -80,4 +106,13 @@ pub async fn start_worker(state: AppState) {
             sleep(Duration::from_secs(30)).await;
         }
     });
+}
+
+// Dummy implementation, zameni kasnije pravim SendGrid pozivom
+async fn send_alert_email(url: &str) -> Result<(), reqwest::Error> {
+    info!("Sending alert email for down monitor: {}", url);
+
+    // Simulacija API poziva
+    // TODO: ovde ide tvoj pravi SendGrid poziv
+    Ok(())
 }
