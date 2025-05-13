@@ -201,3 +201,73 @@ pub async fn list_active_monitors(
     }
 }
 
+use crate::db::status_log_repository::StatusLogRepository;
+use crate::models::status_log::StatusLog;
+
+#[derive(serde::Serialize)]
+pub struct MonitorStatusSummary {
+    pub monitor_id: u64,
+    pub last_status: Option<StatusLog>,
+    pub uptime_percentage: f64,
+    pub average_response_time_ms: Option<f64>,
+}
+
+pub async fn get_monitor_status(
+    State(state): State<AppState>,
+    CurrentUser { user_id }: CurrentUser,
+    Path(monitor_id): Path<u64>,
+) -> impl IntoResponse {
+    tracing::info!("Fetching monitor status for monitor_id {} and user_id {}", monitor_id, user_id);
+
+    let user_repo = UserRepository::new(&state.db);
+    let monitor_repo = MonitorRepository::new(&state.db);
+
+    if !user_repo.exists_by_id(user_id).await.unwrap_or(false) {
+        tracing::warn!("Unauthorized access attempt by non-existing user_id: {}", user_id);
+        return (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"error": "User not found"}))).into_response();
+    }
+
+    // Check does the monitor belongs to the User
+    if monitor_repo.get_monitor_by_id(monitor_id, user_id).await.unwrap_or(None).is_none() {
+        tracing::warn!("Monitor {} not found for user_id {}", monitor_id, user_id);
+        return (StatusCode::NOT_FOUND, Json(serde_json::json!({"error": "Monitor not found"}))).into_response();
+    }
+
+    let status_log_repo = StatusLogRepository::new(&state.db);
+
+    // Fetch the last log
+    let last_status = match status_log_repo.get_last_status_log(monitor_id).await {
+        Ok(log) => log,
+        Err(e) => {
+            tracing::error!("Failed to fetch last status log: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": "Failed to fetch status"}))).into_response();
+        }
+    };
+
+    // Uptime %
+    let uptime = status_log_repo.get_uptime_percentage(monitor_id)
+        .await
+        .unwrap_or_else(|e| {
+        tracing::error!("Failed to calculate uptime: {:?}", e);
+        0.0
+    });
+
+    // Avg response time
+    let avg_response_time = status_log_repo.get_avg_response_time(monitor_id)
+        .await
+        .unwrap_or_else(|e| {
+        tracing::error!("Failed to calculate avg response time: {:?}", e);
+        None
+    });
+
+    let summary = MonitorStatusSummary {
+        monitor_id,
+        last_status,
+        uptime_percentage: uptime,
+        average_response_time_ms: avg_response_time,
+    };
+
+    (StatusCode::OK, Json(summary)).into_response()
+}
+
+

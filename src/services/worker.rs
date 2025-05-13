@@ -103,7 +103,7 @@ pub async fn start_worker(state: AppState) {
 
             // Sleep before next ping cycle
             info!("Sleeping before next cycle...");
-            sleep(Duration::from_secs(30)).await;
+            sleep(Duration::from_secs(1000)).await;
         }
     });
 }

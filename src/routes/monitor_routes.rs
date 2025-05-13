@@ -9,5 +9,7 @@ pub fn monitor_routes() -> Router<AppState> {
         .route("/monitors", post(monitor_handler::create_monitor))
         .route("/monitors/:id", delete(monitor_handler::delete_monitor))
         .route("/monitors/:id", put(monitor_handler::update_monitor))
+
         .route("/monitors/:id/logs", get(status_log_handler::list_status_logs))
+        .route("/monitors/:id/status", get(monitor_handler::get_monitor_status))
 }
