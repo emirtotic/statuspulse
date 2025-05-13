@@ -85,15 +85,21 @@ pub async fn start_worker(state: AppState) {
                                             match alerts_repo.was_recently_sent(monitor_id, "email", since).await {
                                                 Ok(false) => {
                                                     let subject = format!("Monitor DOWN: {}", monitor.label);
-                                                    let body = format!(
-                                                        "Dear {},\n\nMonitor [{}] ({}) is DOWN and cannot be reached.\n\nStatusPulse App",
-                                                        user.name,
-                                                        monitor.label,
-                                                        monitor.url
-                                                    );
+
+                                                    let replacements = &[
+                                                        ("USER_NAME", user.name.as_str()),
+                                                        ("MONITOR_LABEL", monitor.label.as_str()),
+                                                        ("MONITOR_URL", monitor.url.as_str()),
+                                                    ];
+
 
                                                     if let Err(e) = sendgrid_service
-                                                        .send_alert(&user.email, &subject, &body)
+                                                        .send_alert(
+                                                            &user.email,
+                                                            &subject,
+                                                            "src/services/email_templates/monitor_down.html",
+                                                            replacements,
+                                                        )
                                                         .await
                                                     {
                                                         error!("Failed to send alert email: {:?}", e);
