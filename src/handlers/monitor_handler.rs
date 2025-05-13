@@ -11,6 +11,7 @@ use crate::{
     models::monitor::Monitor,
 };
 use serde::Deserialize;
+use crate::db::user_repository::UserRepository;
 
 #[derive(Deserialize)]
 pub struct CreateMonitorRequest {
@@ -33,6 +34,13 @@ pub async fn list_monitors(
 ) -> impl IntoResponse {
     tracing::info!("Fetching monitors for user_id: {}", user_id);
 
+    let user_repo = UserRepository::new(&state.db);
+
+    if !user_repo.exists_by_id(user_id).await.unwrap_or(false) {
+        tracing::warn!("Unauthorized access attempt by non-existing user_id: {}", user_id);
+        return (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"error": "User not found"}))).into_response();
+    }
+
     let repo = MonitorRepository::new(&state.db);
 
     match repo.get_all_by_user(user_id).await {
@@ -52,6 +60,14 @@ pub async fn create_monitor(
     CurrentUser { user_id }: CurrentUser,
     Json(payload): Json<CreateMonitorRequest>,
 ) -> impl IntoResponse {
+
+    let user_repo = UserRepository::new(&state.db);
+
+    if !user_repo.exists_by_id(user_id).await.unwrap_or(false) {
+        tracing::warn!("Unauthorized access attempt by non-existing user_id: {}", user_id);
+        return (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"error": "User not found"}))).into_response();
+    }
+
     let repo = MonitorRepository::new(&state.db);
 
     match repo.create_monitor(user_id, &payload.label, &payload.url, payload.interval_mins).await {
@@ -65,6 +81,14 @@ pub async fn delete_monitor(
     CurrentUser { user_id }: CurrentUser,
     Path(monitor_id): Path<u64>,
 ) -> impl IntoResponse {
+
+    let user_repo = UserRepository::new(&state.db);
+
+    if !user_repo.exists_by_id(user_id).await.unwrap_or(false) {
+        tracing::warn!("Unauthorized access attempt by non-existing user_id: {}", user_id);
+        return (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"error": "User not found"}))).into_response();
+    }
+
     let repo = MonitorRepository::new(&state.db);
 
     match repo.delete_monitor(monitor_id, user_id).await {
@@ -79,6 +103,14 @@ pub async fn update_monitor(
     Path(monitor_id): Path<u64>,
     Json(payload): Json<UpdateMonitorRequest>,
 ) -> impl IntoResponse {
+
+    let user_repo = UserRepository::new(&state.db);
+
+    if !user_repo.exists_by_id(user_id).await.unwrap_or(false) {
+        tracing::warn!("Unauthorized access attempt by non-existing user_id: {}", user_id);
+        return (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"error": "User not found"}))).into_response();
+    }
+
     let repo = MonitorRepository::new(&state.db);
 
     tracing::info!("Updating monitor_id {} for user_id {}", monitor_id, user_id);
