@@ -5,12 +5,13 @@ mod handlers;
 mod routes;
 mod utils;
 
-use axum::{Router, routing::get};
+use axum::{Router, routing::get, Extension};
 use std::{env, net::SocketAddr};
 use dotenvy::dotenv;
 use sqlx::{mysql::MySqlPoolOptions, migrate::Migrator};
 use tracing_subscriber::{fmt, EnvFilter};
 use services::worker;
+use tera::Tera;
 
 static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
 
@@ -25,7 +26,7 @@ async fn main() -> Result<(), sqlx::Error> {
     dotenv().ok();
 
     tracing_subscriber::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_env_filter(EnvFilter::from_default_env())
         .with_target(true)
         .compact()
         .init();
@@ -48,9 +49,13 @@ async fn main() -> Result<(), sqlx::Error> {
         jwt_secret,
     };
 
+    // Tera templates
+    let tera = Tera::new("src/templates/**/*").expect("Failed to load templates");
+
     // Start ping worker in background
     tokio::spawn(worker::start_worker(state.clone()));
 
+    // Full router
     let app = Router::new()
         .nest(
             "/api",
@@ -58,11 +63,12 @@ async fn main() -> Result<(), sqlx::Error> {
         )
         .nest(
             "/auth",
-            routes::auth_routes().with_state(state.clone())
+            routes::api_auth_routes().with_state(state.clone())
         )
+        .nest("/", routes::frontend_auth_routes().with_state(state.clone()))
         .route("/health", get(health_check))
+        .layer(Extension(tera))
         .with_state(state);
-
 
     let addr: SocketAddr = "0.0.0.0:3000".parse().unwrap();
     tracing::info!("StatusPulse is listening on {}", addr);

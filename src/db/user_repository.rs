@@ -1,3 +1,4 @@
+use bcrypt::verify;
 use crate::models::user::User;
 use sqlx::{MySqlPool, Row};
 
@@ -8,6 +9,19 @@ pub struct UserRepository<'a> {
 impl<'a> UserRepository<'a> {
     pub fn new(pool: &'a MySqlPool) -> Self {
         Self { pool }
+    }
+
+    pub async fn authenticate_user(&self, email: &str, password: &str) -> Result<Option<User>, sqlx::Error> {
+        if let Some(user) = self.get_by_email(email).await? {
+
+            match verify(password, &user.password_hash) {
+                Ok(true) => Ok(Some(user)),
+                Ok(false) => Ok(None),
+                Err(_) => Ok(None),
+            }
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn get_by_email(&self, email: &str) -> Result<Option<User>, sqlx::Error> {

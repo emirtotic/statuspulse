@@ -1,12 +1,7 @@
-use axum::{
-    extract::State,
-    response::IntoResponse,
-    Json,
-    http::StatusCode,
-};
-use serde::Deserialize;
-use crate::services::auth_service::AuthService;
-use crate::AppState;
+use axum::{extract::{State, Form}, response::IntoResponse, response::Redirect};
+use serde::{Deserialize, Serialize};
+use crate::{services::auth_service::AuthService, AppState};
+use axum_extra::extract::cookie::{Cookie, CookieJar};
 
 #[derive(Deserialize)]
 pub struct RegisterRequest {
@@ -21,39 +16,46 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-#[derive(serde::Serialize)]
-pub struct LoginResponse {
+#[derive(Serialize)]
+pub struct AuthResponse {
     pub token: String,
 }
 
-pub async fn register(
+#[axum::debug_handler]
+pub async fn login(
     State(state): State<AppState>,
-    Json(payload): Json<RegisterRequest>,
+    jar: CookieJar,
+    Form(form): Form<LoginRequest>,
 ) -> impl IntoResponse {
     let auth_service = AuthService::new(&state.db, &state.jwt_secret);
 
-    match auth_service.register_user(&payload.name, &payload.email, &payload.password).await {
-        Ok(token) => {
-            (StatusCode::OK, Json(LoginResponse { token })).into_response()
+    match auth_service.login_user(&form.email, &form.password).await {
+        Ok(_token) => {
+            Redirect::to("/dashboard").into_response()
         }
-        Err(err) => {
-            (StatusCode::BAD_REQUEST, Json(serde_json::json!({ "error": err }))).into_response()
+        Err(_) => {
+            let jar = jar.add(Cookie::build("flash").path("/").build());
+            (jar, Redirect::to("/login")).into_response()
         }
     }
 }
 
-pub async fn login(
+#[axum::debug_handler]
+pub async fn register(
     State(state): State<AppState>,
-    Json(payload): Json<LoginRequest>,
+    jar: CookieJar,
+    Form(form): Form<RegisterRequest>,
 ) -> impl IntoResponse {
     let auth_service = AuthService::new(&state.db, &state.jwt_secret);
 
-    match auth_service.login_user(&payload.email, &payload.password).await {
-        Ok(token) => {
-            (StatusCode::OK, Json(LoginResponse { token })).into_response()
+    match auth_service.register_user(&form.name, &form.email, &form.password).await {
+        Ok(_token) => {
+            let jar = jar.add(Cookie::build("flash").path("/").build());
+            (jar, Redirect::to("/login")).into_response()
         }
-        Err(_) => {
-            (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"error": "Invalid credentials"}))).into_response()
+        Err(_err_msg) => {
+            let jar = jar.add(Cookie::build("flash").path("/").build());
+            (jar, Redirect::to("/register")).into_response()
         }
     }
 }
