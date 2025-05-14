@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}StatusPulse{% endblock title %}</title>
+    <style>
+        body { font-family: sans-serif; margin: 2rem; }
+        .container { max-width: 600px; margin: auto; }
+        .alert { color: red; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>StatusPulse</h1>
+    <nav>
+        <a href="/dashboard">Dashboard</a> |
+        <a href="/login">Login</a> |
+        <a href="/register">Register</a>
+    </nav>
+    <hr>
+</header>
+
+<main>
+    {% block content %}{% endblock content %}
+</main>
+</body>
+</html>
