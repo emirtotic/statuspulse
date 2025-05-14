@@ -90,3 +90,15 @@ where
         Ok(CurrentUser { user_id })
     }
 }
+
+pub fn decode_token(token: &str, secret: &str) -> Result<u64, ()> {
+    match decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(secret.as_bytes()),
+        &Validation::new(Algorithm::HS256),
+    ) {
+        Ok(data) => data.claims.sub.parse::<u64>().map_err(|_| ()),
+        Err(_) => Err(()),
+    }
+}
+

@@ -8,8 +8,8 @@
     {% if flash %}
     <div class="alert">{{ flash }}</div>
     {% endif %}
-    <form action="/login" method="post">
-        <label>Email:</label><br>
+    <form action="/login" method="post" onsubmit="console.log('Submitting login form');">
+    <label>Email:</label><br>
         <input type="email" name="email" required><br><br>
 
         <label>Password:</label><br>

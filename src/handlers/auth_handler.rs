@@ -1,4 +1,7 @@
-use axum::{extract::{State, Form}, response::IntoResponse, response::Redirect};
+use axum::{
+    extract::{State, Form},
+    response::{IntoResponse, Redirect},
+};
 use serde::{Deserialize, Serialize};
 use crate::{services::auth_service::AuthService, AppState};
 use axum_extra::extract::cookie::{Cookie, CookieJar};
@@ -30,12 +33,25 @@ pub async fn login(
     let auth_service = AuthService::new(&state.db, &state.jwt_secret);
 
     match auth_service.login_user(&form.email, &form.password).await {
-        Ok(_token) => {
-            Redirect::to("/dashboard").into_response()
+        Ok(token) => {
+            tracing::info!("✅ Login successful, issuing auth_token cookie");
+
+            let mut auth_cookie = Cookie::new("auth_token", token);
+            auth_cookie.set_path("/");
+            auth_cookie.set_http_only(true);
+            // ⚠️ Don't use .set_secure(true) on localhost HTTP
+            // auth_cookie.set_secure(true);
+
+            (jar.add(auth_cookie), Redirect::to("/dashboard"))
         }
-        Err(_) => {
-            let jar = jar.add(Cookie::build("flash").path("/").build());
-            (jar, Redirect::to("/login")).into_response()
+        Err(err) => {
+            tracing::warn!("❌ Login failed: {:?}", err);
+
+            let mut flash_cookie = Cookie::new("flash", "Invalid credentials");
+            flash_cookie.set_path("/login");
+            flash_cookie.set_max_age(time::Duration::seconds(5));
+
+            (jar.add(flash_cookie), Redirect::to("/login"))
         }
     }
 }
@@ -49,13 +65,23 @@ pub async fn register(
     let auth_service = AuthService::new(&state.db, &state.jwt_secret);
 
     match auth_service.register_user(&form.name, &form.email, &form.password).await {
-        Ok(_token) => {
-            let jar = jar.add(Cookie::build("flash").path("/").build());
-            (jar, Redirect::to("/login")).into_response()
+        Ok(_) => {
+            tracing::info!("✅ Registration successful");
+
+            let mut flash_cookie = Cookie::new("flash", "Registration successful! Please login.");
+            flash_cookie.set_path("/login");
+            flash_cookie.set_max_age(time::Duration::seconds(5));
+
+            (jar.add(flash_cookie), Redirect::to("/login"))
         }
-        Err(_err_msg) => {
-            let jar = jar.add(Cookie::build("flash").path("/").build());
-            (jar, Redirect::to("/register")).into_response()
+        Err(err) => {
+            tracing::warn!("❌ Registration failed: {:?}", err);
+
+            let mut flash_cookie = Cookie::new("flash", "Registration failed");
+            flash_cookie.set_path("/register");
+            flash_cookie.set_max_age(time::Duration::seconds(5));
+
+            (jar.add(flash_cookie), Redirect::to("/register"))
         }
     }
 }

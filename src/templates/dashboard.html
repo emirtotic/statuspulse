@@ -4,10 +4,63 @@
 
 {% block content %}
 <div class="container">
-    <h2>Dashboard</h2>
-    {% if flash %}
-    <div class="alert">{{ flash }}</div>
+    <h2>Your Monitors</h2>
+
+    {% if monitors | length == 0 %}
+    <p>You have no monitors yet. <a href="/monitors/new">Add your first monitor</a></p>
+    {% else %}
+    <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+        <thead>
+        <tr>
+            <th style="border-bottom: 1px solid #ccc; padding: 8px;">Label</th>
+            <th style="border-bottom: 1px solid #ccc; padding: 8px;">URL</th>
+            <th style="border-bottom: 1px solid #ccc; padding: 8px;">Status</th>
+            <th style="border-bottom: 1px solid #ccc; padding: 8px;">Interval (mins)</th>
+            <th style="border-bottom: 1px solid #ccc; padding: 8px;">Uptime (%)</th>
+            <th style="border-bottom: 1px solid #ccc; padding: 8px;">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for monitor in monitors %}
+        <tr>
+            <td style="padding: 8px;">{{ monitor.label }}</td>
+            <td style="padding: 8px;">
+                <a href="{{ monitor.url }}" target="_blank">{{ monitor.url }}</a>
+            </td>
+            <td style="padding: 8px;">
+                {% if monitor.is_active %}
+                <span style="color: green;">Active</span>
+                {% else %}
+                <span style="color: red;">Inactive</span>
+                {% endif %}
+            </td>
+            <td style="padding: 8px;">{{ monitor.interval_mins }}</td>
+            <td style="padding: 8px;">
+                {% if monitor.uptime_percentage is defined %}
+                {{ monitor.uptime_percentage | round(method="common", precision=2) }}%
+                {% else %}
+                N/A
+                {% endif %}
+            </td>
+            <td style="padding: 8px;">
+                <form action="/monitors/{{ monitor.id }}/delete" method="post" style="display:inline;">
+                    <button type="submit">Delete</button>
+                </form>
+                &nbsp;
+                <a href="/monitors/{{ monitor.id }}/edit">Edit</a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
     {% endif %}
-    <p>SUCCESS! You are logged in.</p>
+
+    <div style="margin-top: 2rem;">
+        <a href="/monitors/new" style="padding: 8px 16px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px;">Add New Monitor</a>
+    </div>
+
+    <div style="margin-top: 1rem;">
+        <a href="/logout" style="color: red;">Logout</a>
+    </div>
 </div>
 {% endblock content %}
