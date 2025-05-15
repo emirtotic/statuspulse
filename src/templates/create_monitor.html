@@ -3,20 +3,12 @@
 {% block title %}Add New Monitor - StatusPulse{% endblock title %}
 
 {% block content %}
-<div class="flex flex-col gap-6">
+<div class="max-w-xl mx-auto bg-white p-8 shadow rounded-lg space-y-6">
 
-    <header class="flex justify-between items-center border-b pb-4">
-        <h1 class="text-2xl font-semibold text-gray-800">StatusPulse</h1>
-        <nav class="flex gap-4 text-blue-600">
-            <a href="/dashboard" class="hover:underline">Dashboard</a>
-            <a href="/logout" class="hover:underline text-red-500">Logout</a>
-        </nav>
-    </header>
-
-    <h2 class="text-xl font-medium text-gray-700">Add New Monitor</h2>
+    <h2 class="text-xl font-semibold text-gray-800">Add New Monitor</h2>
 
     {% if flash %}
-    <div class="bg-red-100 text-red-700 p-3 rounded-lg">
+    <div class="bg-red-100 text-red-700 p-3 rounded-lg text-center">
         {{ flash }}
     </div>
     {% endif %}
@@ -24,25 +16,25 @@
     <form method="post" action="/monitors/new" class="space-y-4">
         <div>
             <label class="block text-sm font-medium text-gray-600">Label</label>
-            <input type="text" name="label" required class="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" name="label" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
         </div>
 
         <div>
             <label class="block text-sm font-medium text-gray-600">URL</label>
-            <input type="url" name="url" required class="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="url" name="url" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
         </div>
 
         <div>
             <label class="block text-sm font-medium text-gray-600">Interval (minutes)</label>
-            <input type="number" name="interval_mins" min="1" required class="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="number" name="interval_mins" min="1" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
         </div>
 
-        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Create Monitor</button>
+        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
+            Create Monitor
+        </button>
     </form>
 
-    <div class="mt-4">
-        <a href="/dashboard" class="text-blue-600 hover:underline">&larr; Back to Dashboard</a>
-    </div>
+    <a href="/dashboard" class="text-sm text-blue-600 hover:underline block text-center">← Back to Dashboard</a>
 
 </div>
 {% endblock content %}
