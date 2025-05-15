@@ -4,11 +4,12 @@ use crate::{
     AppState,
 };
 use reqwest::Client;
-use std::{sync::Arc, time::Instant};
+use std::{collections::HashMap, sync::Arc, time::Instant};
 use tokio::time::{sleep, Duration};
 use tracing::{info, error};
 use futures::future::join_all;
 use time::{OffsetDateTime, Duration as TimeDuration};
+use tokio::sync::Mutex;
 
 pub async fn start_worker(state: AppState) {
     tokio::spawn(async move {
@@ -23,6 +24,8 @@ pub async fn start_worker(state: AppState) {
             std::env::var("SENDGRID_FROM_EMAIL").expect("SENDGRID_FROM_EMAIL must be set"),
         ));
 
+        let next_check_times = Arc::new(Mutex::new(HashMap::<u64, OffsetDateTime>::new()));
+
         loop {
             info!("Starting monitor ping cycle...");
 
@@ -36,8 +39,22 @@ pub async fn start_worker(state: AppState) {
                         let status_log_repo = Arc::clone(&status_log_repo);
                         let alerts_repo = Arc::clone(&alerts_repo);
                         let sendgrid_service = Arc::clone(&sendgrid_service);
+                        let next_check_times = Arc::clone(&next_check_times);
 
                         async move {
+                            let now = OffsetDateTime::now_utc();
+
+                            {
+                                let mut map = next_check_times.lock().await;
+                                if let Some(next_check) = map.get(&monitor.id) {
+                                    if &now < next_check {
+                                        return; // Not time yet, skip this monitor
+                                    }
+                                }
+                                // Schedule next check
+                                map.insert(monitor.id, now + TimeDuration::minutes(monitor.interval_mins.into()));
+                            }
+
                             let url = monitor.url.clone();
                             let monitor_id = monitor.id;
 
@@ -77,8 +94,8 @@ pub async fn start_worker(state: AppState) {
                                         error!("Failed to insert error log: {:?}", e);
                                     }
 
-                                    // ALERT LOGIC
-                                    let since = OffsetDateTime::now_utc() - TimeDuration::minutes(15);
+                                    // ALERT LOGIC (cooldown 8h)
+                                    let since = OffsetDateTime::now_utc() - TimeDuration::hours(8);
 
                                     match monitor_repo.get_monitor_owner(monitor_id).await {
                                         Ok(Some(user)) => {
@@ -91,7 +108,6 @@ pub async fn start_worker(state: AppState) {
                                                         ("MONITOR_LABEL", monitor.label.as_str()),
                                                         ("MONITOR_URL", monitor.url.as_str()),
                                                     ];
-
 
                                                     if let Err(e) = sendgrid_service
                                                         .send_alert(
@@ -136,8 +152,8 @@ pub async fn start_worker(state: AppState) {
                 }
             }
 
-            info!("Sleeping before next cycle...");
-            sleep(Duration::from_secs(900)).await;
+            info!("Sleeping 60 seconds before next cycle...");
+            sleep(Duration::from_secs(60)).await;
         }
     });
 }
