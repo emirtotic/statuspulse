@@ -1,5 +1,5 @@
 use axum::{Extension, response::Html};
-use axum_extra::extract::cookie::CookieJar;
+use axum_extra::extract::cookie::{Cookie, CookieJar};
 use tera::Tera;
 
 use axum::{
@@ -81,7 +81,6 @@ pub async fn dashboard(
         });
     }
 
-    // Ovo ostaje isto (jer monitors još uvek živi)
     let monitors_for_template = dashboard_data.into_iter().map(|summary| {
         let monitor = monitors.iter().find(|m| m.id == summary.monitor_id).unwrap();
 
@@ -102,6 +101,27 @@ pub async fn dashboard(
     let rendered = tera.render("dashboard.html", &ctx).unwrap();
     Html(rendered).into_response()
 }
+
+#[axum::debug_handler]
+pub async fn logout(
+    jar: CookieJar,
+) -> impl IntoResponse {
+    // Remove auth_token cookie
+    let mut auth_cookie = Cookie::named("auth_token");
+    auth_cookie.set_path("/");
+    auth_cookie.make_removal();
+
+    // Flash logout message
+    let mut flash_cookie = Cookie::new("flash", "You have been logged out.");
+    flash_cookie.set_path("/login");
+    flash_cookie.set_max_age(time::Duration::seconds(5));
+
+    (
+        jar.add(auth_cookie).add(flash_cookie),
+        Redirect::to("/login")
+    )
+}
+
 
 
 
