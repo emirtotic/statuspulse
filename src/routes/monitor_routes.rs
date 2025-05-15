@@ -1,5 +1,6 @@
 use axum::{Router, routing::{get, post, delete, put}};
 use crate::{handlers::monitor_handler, handlers::status_log_handler, AppState};
+use crate::handlers::axum_handler;
 
 pub fn monitor_routes() -> Router<AppState> {
     Router::new()
@@ -12,4 +13,7 @@ pub fn monitor_routes() -> Router<AppState> {
 
         .route("/monitors/:id/logs", get(status_log_handler::list_status_logs))
         .route("/monitors/:id/status", get(monitor_handler::get_monitor_status))
+        .route("/monitors/new", get(axum_handler::form_create_monitor))
+        .route("/monitors/:id/edit", get(axum_handler::form_edit_monitor))
+
 }

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Monitor - StatusPulse{% endblock title %}
+
+{% block content %}
+<body>
+<header>
+    <h1>StatusPulse</h1>
+    <nav>
+        <a href="/dashboard">Dashboard</a> |
+        <a href="/logout">Logout</a> |
+    </nav>
+    <hr>
+</header>
+<div class="container">
+    <h2>Edit Monitor</h2>
+
+    <form method="post" action="/monitors/{{ monitor.id }}/edit">
+        <label>Label:</label><br>
+        <input type="text" name="label" value="{{ monitor.label }}" required><br><br>
+
+        <label>URL:</label><br>
+        <input type="url" name="url" value="{{ monitor.url }}" required><br><br>
+
+        <label>Interval (minutes):</label><br>
+        <input type="number" name="interval_mins" value="{{ monitor.interval_mins }}" min="1" required><br><br>
+
+        <label>Status:</label><br>
+        <select name="is_active">
+            <option value="true" {% if monitor.is_active %}selected{% endif %}>Active</option>
+            <option value="false" {% if not monitor.is_active %}selected{% endif %}>Inactive</option>
+        </select>
+        <br><br>
+
+        <button type="submit">Update Monitor</button>
+    </form>
+
+    <p><a href="/dashboard">Back to Dashboard</a></p>
+</div>
+</body>
+{% endblock content %}

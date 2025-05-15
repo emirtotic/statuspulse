@@ -1,4 +1,4 @@
-use axum::{Extension, response::Html};
+use axum::{Extension, response::Html, Form};
 use axum_extra::extract::cookie::{Cookie, CookieJar};
 use tera::Tera;
 
@@ -6,9 +6,11 @@ use axum::{
     extract::{State},
     response::{Redirect},
 };
+use axum::extract::Path;
 use axum::response::IntoResponse;
+use serde::Deserialize;
 use crate::{AppState, db::monitor_repository::MonitorRepository, utils::jwt_auth::CurrentUser};
-use crate::models::monitor::MonitorStatusSummary;
+use crate::models::monitor::{EditMonitorForm, MonitorStatusSummary};
 
 #[axum::debug_handler]
 pub async fn form_login(
@@ -122,8 +124,176 @@ pub async fn logout(
     )
 }
 
+#[axum::debug_handler]
+pub async fn form_create_monitor(
+    Extension(tera): Extension<Tera>,
+) -> impl IntoResponse {
+    let ctx = tera::Context::new();
+    let rendered = tera.render("create_monitor.html", &ctx).unwrap();
+    Html(rendered).into_response()
+}
 
+#[axum::debug_handler]
+pub async fn form_edit_monitor(
+    State(state): State<AppState>,
+    Extension(tera): Extension<Tera>,
+    Path(monitor_id): Path<u64>,
+    jar: CookieJar,
+) -> impl IntoResponse {
+    let token = jar.get("auth_token").map(|c| c.value().to_string());
+    let user_id = match token
+        .as_ref()
+        .and_then(|t| crate::utils::jwt_auth::decode_token(t, &state.jwt_secret).ok())
+    {
+        Some(id) => id,
+        None => return Redirect::to("/login").into_response(),
+    };
 
+    let monitor_repo = MonitorRepository::new(&state.db);
+    let monitor = match monitor_repo.get_monitor_by_id(monitor_id, user_id).await {
+        Ok(Some(m)) => m,
+        _ => return Redirect::to("/dashboard").into_response(),
+    };
 
+    let mut ctx = tera::Context::new();
+    ctx.insert("monitor", &monitor);
 
+    let rendered = tera.render("edit_monitor.html", &ctx).unwrap();
+    Html(rendered).into_response()
+}
 
+#[axum::debug_handler]
+pub async fn delete_monitor_form(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(monitor_id): Path<u64>,
+) -> impl IntoResponse {
+    // Autentifikacija preko cookie
+    let token = if let Some(cookie) = jar.get("auth_token") {
+        cookie.value().to_string()
+    } else {
+        return Redirect::to("/login").into_response();
+    };
+
+    // Decode token i uzmi user_id
+    let user_id = match crate::utils::jwt_auth::decode_token(&token, &state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => return Redirect::to("/login").into_response(),
+    };
+
+    let repo = MonitorRepository::new(&state.db);
+
+    // Pokušaj brisanja monitora
+    match repo.delete_monitor(monitor_id, user_id).await {
+        Ok(affected) if affected > 0 => {
+            tracing::info!("Monitor {} deleted by user {}", monitor_id, user_id);
+        }
+        Ok(_) => {
+            tracing::warn!("Monitor {} not found or unauthorized for user {}", monitor_id, user_id);
+        }
+        Err(e) => {
+            tracing::error!("Failed to delete monitor {}: {:?}", monitor_id, e);
+        }
+    }
+
+    Redirect::to("/dashboard").into_response()
+}
+
+#[derive(Deserialize)]
+pub struct CreateMonitorForm {
+    pub label: String,
+    pub url: String,
+    pub interval_mins: i32,
+}
+
+#[axum::debug_handler]
+pub async fn create_monitor_form(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Form(form): Form<CreateMonitorForm>,
+) -> impl IntoResponse {
+    // Auth via cookie
+    let token = if let Some(cookie) = jar.get("auth_token") {
+        cookie.value().to_string()
+    } else {
+        return Redirect::to("/login").into_response();
+    };
+
+    // Decode token -> user_id
+    let user_id = match crate::utils::jwt_auth::decode_token(&token, &state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => return Redirect::to("/login").into_response(),
+    };
+
+    let repo = MonitorRepository::new(&state.db);
+
+    // Try create monitor
+    match repo.create_monitor(user_id, &form.label, &form.url, form.interval_mins).await {
+        Ok(_) => Redirect::to("/dashboard").into_response(),
+        Err(e) => {
+            tracing::error!("Failed to create monitor: {:?}", e);
+
+            // Flash error message
+            let mut flash_cookie = Cookie::new("flash", "Failed to create monitor.");
+            flash_cookie.set_path("/monitors/new");
+            flash_cookie.set_max_age(time::Duration::seconds(5));
+
+            (
+                jar.add(flash_cookie),
+                Redirect::to("/monitors/new")
+            ).into_response()
+        }
+    }
+}
+
+#[axum::debug_handler]
+pub async fn edit_monitor_form(
+    State(state): State<AppState>,
+    Path(monitor_id): Path<u64>,
+    jar: CookieJar,
+    Form(form): Form<EditMonitorForm>,
+) -> impl IntoResponse {
+    let token = jar.get("auth_token").map(|c| c.value().to_string());
+    let user_id = match token
+        .as_ref()
+        .and_then(|t| crate::utils::jwt_auth::decode_token(t, &state.jwt_secret).ok())
+    {
+        Some(id) => id,
+        None => return Redirect::to("/login").into_response(),
+    };
+
+    // Ovo je sada prava logika: match stringa
+    let is_active = form.is_active == Some("true".to_string());
+
+    let repo = MonitorRepository::new(&state.db);
+
+    match repo.update_monitor(
+        monitor_id,
+        user_id,
+        &form.label,
+        &form.url,
+        form.interval_mins,
+        is_active,
+    ).await {
+        Ok(affected) if affected > 0 => {
+            tracing::info!("Monitor {} updated by user {}", monitor_id, user_id);
+
+            let mut flash_cookie = Cookie::new("flash", "Monitor updated successfully.");
+            flash_cookie.set_path("/dashboard");
+            flash_cookie.set_max_age(time::Duration::seconds(5));
+
+            return (
+                jar.add(flash_cookie),
+                Redirect::to("/dashboard")
+            ).into_response();
+        }
+        Ok(_) => {
+            tracing::warn!("Monitor {} not found or unauthorized for user {}", monitor_id, user_id);
+        }
+        Err(e) => {
+            tracing::error!("Failed to update monitor {}: {:?}", monitor_id, e);
+        }
+    }
+
+    Redirect::to("/dashboard").into_response()
+}

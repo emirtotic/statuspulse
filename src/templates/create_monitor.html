@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Monitor - StatusPulse{% endblock title %}
+
+{% block content %}
+<body>
+<header>
+    <h1>StatusPulse</h1>
+    <nav>
+        <a href="/dashboard">Dashboard</a> |
+        <a href="/logout">Logout</a> |
+    </nav>
+    <hr>
+</header>
+<div class="container">
+    <h2>Add New Monitor</h2>
+
+    {% if flash %}
+    <div class="alert">{{ flash }}</div>
+    {% endif %}
+
+    <form method="post" action="/monitors/new">
+        <label>Label:</label><br>
+        <input type="text" name="label" required><br><br>
+
+        <label>URL:</label><br>
+        <input type="url" name="url" required><br><br>
+
+        <label>Interval (minutes):</label><br>
+        <input type="number" name="interval_mins" min="1" required><br><br>
+
+        <button type="submit">Create Monitor</button>
+    </form>
+
+    <p><a href="/dashboard">Back to Dashboard</a></p>
+</div>
+</body>
+{% endblock content %}

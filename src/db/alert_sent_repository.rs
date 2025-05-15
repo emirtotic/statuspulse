@@ -1,5 +1,5 @@
 use crate::models::alert_sent::AlertSent;
-use sqlx::MySqlPool;
+use sqlx::{MySqlPool, Row};
 use time::OffsetDateTime;
 
 pub struct AlertSentRepository<'a> {
@@ -14,18 +14,18 @@ impl<'a> AlertSentRepository<'a> {
     pub async fn insert_alert(
         &self,
         monitor_id: u64,
-        alert_type: &str, // email or webhook
-        method: &str,     // sendgrid | slack_webhook | etc.
+        alert_type: &str,
+        method: &str,
     ) -> Result<u64, sqlx::Error> {
-        let result = sqlx::query!(
+        let result = sqlx::query(
             r#"
-            INSERT INTO alerts_sent (monitor_id, alert_type, method)
-            VALUES (?, ?, ?)
-            "#,
-            monitor_id,
-            alert_type,
-            method
+        INSERT INTO alerts_sent (monitor_id, alert_type, method)
+        VALUES (?, ?, ?)
+        "#
         )
+            .bind(monitor_id)
+            .bind(alert_type)
+            .bind(method)
             .execute(self.pool)
             .await?;
 
@@ -38,19 +38,22 @@ impl<'a> AlertSentRepository<'a> {
         alert_type: &str,
         since: OffsetDateTime,
     ) -> Result<bool, sqlx::Error> {
-        let count = sqlx::query_scalar!(
-        r#"
+        let row = sqlx::query(
+            r#"
         SELECT COUNT(*) as count
         FROM alerts_sent
         WHERE monitor_id = ? AND alert_type = ? AND sent_at >= ?
-        "#,
-        monitor_id,
-        alert_type,
-        since
-    )
+        "#
+        )
+            .bind(monitor_id)
+            .bind(alert_type)
+            .bind(since)
             .fetch_one(self.pool)
             .await?;
 
+        let count: i64 = row.try_get("count")?;
+
         Ok(count > 0)
     }
+
 }

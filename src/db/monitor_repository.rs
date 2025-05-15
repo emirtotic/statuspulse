@@ -158,28 +158,33 @@ impl<'a> MonitorRepository<'a> {
     }
 
     pub async fn get_all_active(&self) -> Result<Vec<Monitor>, sqlx::Error> {
-        tracing::info!("Fetching all active monitors...");
+        tracing::info!("Querying active monitors...");
 
-        let monitors = sqlx::query_as!(
-        Monitor,
-        r#"
-        SELECT
-            id,
-            user_id,
-            label,
-            url,
-            interval_mins,
-            is_active as "is_active: bool",
-            created_at
+        let rows = sqlx::query(
+            r#"
+        SELECT id, user_id, label, url, interval_mins, is_active, created_at
         FROM monitors
         WHERE is_active = true
         "#
-    )
+        )
             .fetch_all(self.pool)
             .await?;
 
+        let monitors = rows.into_iter().map(|row| {
+            Monitor {
+                id: row.try_get("id").unwrap(),
+                user_id: row.try_get("user_id").unwrap(),
+                label: row.try_get("label").unwrap(),
+                url: row.try_get("url").unwrap(),
+                interval_mins: row.try_get("interval_mins").unwrap(),
+                is_active: row.try_get("is_active").unwrap(),
+                created_at: row.try_get("created_at").ok(),
+            }
+        }).collect();
+
         Ok(monitors)
     }
+
 
 
     pub async fn get_all_inactive_monitors(&self, user_id: u64) -> Result<Vec<Monitor>, sqlx::Error> {

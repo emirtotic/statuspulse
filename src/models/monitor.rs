@@ -24,3 +24,10 @@ pub struct MonitorStatusSummary {
     pub average_response_time_ms: Option<f64>,
 }
 
+#[derive(Deserialize)]
+pub struct EditMonitorForm {
+    pub label: String,
+    pub url: String,
+    pub interval_mins: i32,
+    pub is_active: Option<String>,
+}
