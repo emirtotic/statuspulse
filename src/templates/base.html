@@ -4,15 +4,22 @@
     <meta charset="UTF-8">
     <title>{% block title %}StatusPulse{% endblock title %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
+<body class="bg-neutral-50 text-neutral-900 min-h-screen flex flex-col">
 
-<main class="w-full max-w-6xl mx-auto p-6 bg-white shadow-lg rounded-2xl flex-grow">
+<main class="w-full max-w-7xl mx-auto px-6 py-12 flex-grow">
     {% block content %}{% endblock content %}
 </main>
 
-<footer class="w-full py-4 text-center text-sm text-gray-500 mt-8">
-    StatusPulse &copy; {{ now() | date(format="%Y") }} — API Monitoring Tool - by Emir Totić
+<footer class="w-full border-t border-neutral-200 py-6 text-center text-sm text-neutral-500">
+    StatusPulse &copy; {{ now() | date(format="%Y") }} — Reliable Uptime & API Monitoring Tool by
+    <a href="https://emirtotic.github.io/portfolio-site/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
+        Emir Totić
+    </a>
 </footer>
 
 </body>
