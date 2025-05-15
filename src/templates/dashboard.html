@@ -3,77 +3,77 @@
 {% block title %}Dashboard - StatusPulse{% endblock title %}
 
 {% block content %}
-<body>
-<header>
-    <h1>StatusPulse</h1>
-    <nav>
-        <a href="/dashboard">Dashboard</a> |
-        <a href="/logout">Logout</a> |
-    </nav>
-    <hr>
-</header>
-<div class="container">
-    <h2 style="text-align: center;">Your Monitors</h2>
+<div class="flex flex-col gap-6 max-w-7xl mx-auto px-4">
+
+    <header class="flex justify-between items-center border-b pb-4">
+        <h1 class="text-2xl font-semibold text-gray-800">StatusPulse</h1>
+        <nav class="flex gap-4 text-blue-600">
+            <a href="/dashboard" class="hover:underline">Dashboard</a>
+            <a href="/logout" class="hover:underline text-red-500">Logout</a>
+        </nav>
+    </header>
+
+    <h2 class="text-xl font-medium text-gray-700 text-center">Your Monitors</h2>
 
     {% if monitors | length == 0 %}
-    <p>You have no monitors yet. <a href="/monitors/new">Add your first monitor</a></p>
+    <div class="text-center text-gray-600">
+        <p>You have no monitors yet. <a href="/monitors/new" class="text-blue-600 hover:underline">Add your first monitor</a></p>
+    </div>
     {% else %}
-    <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
-        <thead>
-        <tr>
-            <th style="border-bottom: 1px solid #ccc; padding: 8px;">Label</th>
-            <th style="border-bottom: 1px solid #ccc; padding: 8px;">URL</th>
-            <th style="border-bottom: 1px solid #ccc; padding: 8px;">Status</th>
-            <th style="border-bottom: 1px solid #ccc; padding: 8px;">Interval (mins)</th>
-            <th style="border-bottom: 1px solid #ccc; padding: 8px;">Uptime (%)</th>
-            <th style="border-bottom: 1px solid #ccc; padding: 8px;">Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for monitor in monitors %}
-        <tr>
-            <td style="padding: 8px;">{{ monitor.label }}</td>
-            <td style="padding: 8px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                <a href="{{ monitor.url }}" target="_blank">
-                    {{ monitor.url | truncate(length=50, end="...") }}
-                </a>
-            </td>
-            <td style="padding: 8px;">
-                {% if monitor.is_active %}
-                <span style="color: green;">Active</span>
-                {% else %}
-                <span style="color: red;">Inactive</span>
-                {% endif %}
-            </td>
-            <td style="padding: 8px;">{{ monitor.interval_mins }}</td>
-            <td style="padding: 8px;">
-                {% if monitor.uptime_percentage is defined %}
-                {{ monitor.uptime_percentage | round(precision=2) }}%
-                {% else %}
-                N/A
-                {% endif %}
-            </td>
-            <td style="padding: 8px;">
-                <form action="/monitors/{{ monitor.id }}/delete" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this monitor?');">
-                    <button type="submit">Delete</button>
-                </form>
-                &nbsp;
-                <a href="/monitors/{{ monitor.id }}/edit">Edit</a>
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="overflow-x-auto">
+        <table class="w-full bg-white border border-gray-200 shadow rounded-lg">
+            <thead class="bg-gray-100 text-gray-700 text-sm">
+            <tr>
+                <th class="py-3 px-4 border-b">Label</th>
+                <th class="py-3 px-4 border-b">URL</th>
+                <th class="py-3 px-4 border-b">Status</th>
+                <th class="py-3 px-4 border-b">Interval (mins)</th>
+                <th class="py-3 px-4 border-b">Uptime (%)</th>
+                <th class="py-3 px-4 border-b">Actions</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-700 text-sm">
+            {% for monitor in monitors %}
+            <tr class="hover:bg-gray-50">
+                <td class="py-2 px-4">{{ monitor.label }}</td>
+                <td class="py-2 px-4 max-w-[400px] truncate">
+                    <a href="{{ monitor.url }}" target="_blank" class="text-blue-600 hover:underline">
+                        {{ monitor.url | truncate(length=50, end="...") }}
+                    </a>
+                </td>
+                <td class="py-2 px-4">
+                    {% if monitor.is_active %}
+                    <span class="text-green-600 font-medium">Active</span>
+                    {% else %}
+                    <span class="text-red-600 font-medium">Inactive</span>
+                    {% endif %}
+                </td>
+                <td class="py-2 px-4 text-center">{{ monitor.interval_mins }}</td>
+                <td class="py-2 px-4 text-center">
+                    {% if monitor.uptime_percentage is defined %}
+                    {{ monitor.uptime_percentage | round(precision=2) }}%
+                    {% else %}
+                    N/A
+                    {% endif %}
+                </td>
+                <td class="py-2 px-4 flex gap-2">
+                    <form action="/monitors/{{ monitor.id }}/delete" method="post" onsubmit="return confirm('Are you sure you want to delete this monitor?');">
+                        <button type="submit" class="text-red-600 hover:underline">Delete</button>
+                    </form>
+                    <a href="/monitors/{{ monitor.id }}/edit" class="text-blue-600 hover:underline">Edit</a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% endif %}
 
-    <div style="margin-top: 2rem;">
-        <a href="/monitors/new" style="padding: 8px 16px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px;">Add New Monitor</a>
+    <div class="mt-6 text-center">
+        <a href="/monitors/new" class="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            + Add New Monitor
+        </a>
     </div>
 
-    <div style="margin-top: 1rem;">
-        <a href="/logout" style="color: red;">Logout</a>
-    </div>
 </div>
-
-</body>
 {% endblock content %}

@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}StatusPulse{% endblock title %}</title>
-    <style>
-        body { font-family: sans-serif; margin: 2rem; }
-        .container { max-width: 600px; margin: auto; }
-        .alert { color: red; margin-top: 1rem; }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-<main>
+<main class="w-full max-w-6xl mx-auto p-6 bg-white shadow-lg rounded-2xl flex-grow">
     {% block content %}{% endblock content %}
 </main>
+
+<footer class="w-full py-4 text-center text-sm text-gray-500 mt-8">
+    StatusPulse &copy; {{ now() | date(format="%Y") }} — API Monitoring Tool - by Emir Totić
+</footer>
+
 </body>
 </html>
