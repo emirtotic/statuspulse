@@ -12,6 +12,18 @@ use serde::Deserialize;
 use crate::{AppState, db::monitor_repository::MonitorRepository, utils::jwt_auth::CurrentUser};
 use crate::models::monitor::{EditMonitorForm, MonitorStatusSummary};
 
+
+// index (home) page
+#[axum::debug_handler]
+pub async fn landing_page(
+    Extension(tera): Extension<Tera>,
+) -> Html<String> {
+    let ctx = tera::Context::new();
+    let rendered = tera.render("index.html", &ctx).unwrap();
+    Html(rendered)
+}
+
+
 #[axum::debug_handler]
 pub async fn form_login(
     Extension(tera): Extension<Tera>,
