@@ -3,48 +3,39 @@
 {% block title %}Edit Monitor - StatusPulse{% endblock title %}
 
 {% block content %}
-<div class="max-w-xl mx-auto space-y-8 bg-white p-8 shadow rounded-lg">
+<div class="flex flex-col items-center justify-center min-h-[80vh]">
+    <div class="w-full max-w-xl bg-white p-8 rounded-xl shadow-lg">
+        <h2 class="text-2xl font-semibold text-center text-gray-800 mb-6">Edit Monitor</h2>
 
-    <h2 class="text-2xl font-semibold text-center text-gray-800">Edit Monitor</h2>
+        <form method="post" action="/monitors/{{ monitor.id }}/edit" class="space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">Label</label>
+                <input type="text" name="label" value="{{ monitor.label }}" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
 
-    <form method="post" action="/monitors/{{ monitor.id }}/edit" class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">URL</label>
+                <input type="url" name="url" value="{{ monitor.url }}" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-600">Label</label>
-            <input type="text" name="label" value="{{ monitor.label }}" required
-                   class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">Interval (minutes)</label>
+                <input type="number" name="interval_mins" value="{{ monitor.interval_mins }}" min="1" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-600">URL</label>
-            <input type="url" name="url" value="{{ monitor.url }}" required
-                   class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">Status</label>
+                <select name="is_active" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="true" {% if monitor.is_active %}selected{% endif %}>Active</option>
+                    <option value="false" {% if not monitor.is_active %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-600">Interval (minutes)</label>
-            <input type="number" name="interval_mins" value="{{ monitor.interval_mins }}" min="1" required
-                   class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-gray-600">Status</label>
-            <select name="is_active"
-                    class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="true" {% if monitor.is_active %}selected{% endif %}>Active</option>
-                <option value="false" {% if not monitor.is_active %}selected{% endif %}>Inactive</option>
-            </select>
-        </div>
-
-        <div class="flex justify-between items-center">
-            <a href="/dashboard" class="text-sm text-blue-600 hover:underline">← Back to Dashboard</a>
-            <button type="submit"
-                    class="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                Update Monitor
-            </button>
-        </div>
-
-    </form>
-
+            <div class="flex justify-between items-center">
+                <a href="/dashboard" class="text-sm text-blue-600 hover:underline">← Back to Dashboard</a>
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Update Monitor</button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock content %}

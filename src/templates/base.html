@@ -9,23 +9,25 @@
         body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="bg-gray-50 text-neutral-900 min-h-screen flex flex-col">
+<body class="bg-neutral-50 text-neutral-900 min-h-screen flex flex-col">
 
-<header class="w-full border-b bg-white shadow-sm">
-    <div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
-        <h1 class="text-xl font-semibold text-gray-800">StatusPulse</h1>
-        <nav class="flex gap-6 text-blue-600 text-sm">
-            <a href="/dashboard" class="hover:underline">Dashboard</a>
-            <a href="/logout" class="hover:underline text-red-500">Logout</a>
+<header class="w-full bg-white border-b border-neutral-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
+        <a href="/dashboard" class="flex items-center gap-5">
+            <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-16 w-auto">
+        </a>
+        <nav class="flex items-center gap-6 text-base font-medium text-gray-600">
+            <a href="/dashboard" class="hover:text-blue-600 transition">Dashboard</a>
+            <a href="/logout" class="hover:text-red-500 transition">Logout</a>
         </nav>
     </div>
 </header>
 
-<main class="w-full max-w-7xl mx-auto px-6 py-8 flex-grow">
+<main class="w-full max-w-7xl mx-auto px-6 py-10 flex-grow">
     {% block content %}{% endblock content %}
 </main>
 
-<footer class="w-full border-t py-6 text-center text-xs text-neutral-500">
+<footer class="w-full border-t border-neutral-200 py-6 text-center text-sm text-neutral-500">
     StatusPulse &copy; {{ now() | date(format="%Y") }} — Reliable API Monitoring by
     <a href="https://emirtotic.github.io/portfolio-site/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
         Emir Totić

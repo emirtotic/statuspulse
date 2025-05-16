@@ -12,6 +12,7 @@ use sqlx::{mysql::MySqlPoolOptions, migrate::Migrator};
 use tracing_subscriber::{fmt, EnvFilter};
 use services::worker;
 use tera::Tera;
+use tower_http::services::ServeDir;
 
 static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
 
@@ -65,6 +66,7 @@ async fn main() -> Result<(), sqlx::Error> {
             "/auth",
             routes::api_auth_routes().with_state(state.clone())
         )
+        .nest_service("/static", ServeDir::new("static"))
         .nest("/", routes::frontend_auth_routes().with_state(state.clone()))
         .route("/health", get(health_check))
         .layer(Extension(tera))

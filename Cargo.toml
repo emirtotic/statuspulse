@@ -28,4 +28,5 @@ futures = "0.3"
 sendgrid = { version = "0.11", features = ["async"] }
 urlencoding = "2.1.3"
 thiserror = "2.0.12"
+tower-http = { version = "0.5", features = ["fs"] }
 
