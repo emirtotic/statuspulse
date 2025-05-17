@@ -29,4 +29,6 @@ sendgrid = { version = "0.11", features = ["async"] }
 urlencoding = "2.1.3"
 thiserror = "2.0.12"
 tower-http = { version = "0.5", features = ["fs"] }
-
+hmac = "0.12.1"
+sha2 = "0.10.9"
+hex = "0.4.3"

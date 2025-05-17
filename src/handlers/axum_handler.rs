@@ -353,3 +353,12 @@ pub async fn edit_monitor_form(
 
     Redirect::to("/dashboard").into_response()
 }
+
+#[axum::debug_handler]
+pub async fn error_page(
+    Extension(tera): Extension<Tera>,
+) -> impl IntoResponse {
+    let rendered = tera.render("error.html", &tera::Context::new()).unwrap();
+    Html(rendered)
+}
+

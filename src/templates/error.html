@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Error{% endblock title %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col justify-center items-center text-center">
+    <h1 class="text-3xl font-bold text-red-600">Something went wrong</h1>
+    <p class="mt-4 text-gray-600">We couldn't create the checkout session. Please try again or contact support.</p>
+    <a href="/" class="mt-6 px-4 py-2 bg-black text-white rounded-lg hover:bg-yellow-600">Go Back</a>
+</div>
+{% endblock content %}

@@ -69,11 +69,10 @@ pub async fn register(
         Ok(_) => {
             tracing::info!("✅ Registration successful");
 
-            let mut flash_cookie = Cookie::new("flash", "Registration successful! Please login.");
-            flash_cookie.set_path("/login");
+            let mut flash_cookie = Cookie::new("flash", "Registration failed");
+            flash_cookie.set_path("/register");
             flash_cookie.set_max_age(time::Duration::seconds(5));
-
-            (jar.add(flash_cookie), Redirect::to("/login"))
+            jar.add(flash_cookie).into_response();
         }
         Err(err) => {
             tracing::warn!("❌ Registration failed: {:?}", err);
@@ -81,8 +80,9 @@ pub async fn register(
             let mut flash_cookie = Cookie::new("flash", "Registration failed");
             flash_cookie.set_path("/register");
             flash_cookie.set_max_age(time::Duration::seconds(5));
-
-            (jar.add(flash_cookie), Redirect::to("/register"))
+            jar.add(flash_cookie).into_response();
         }
     }
+
+
 }

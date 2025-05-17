@@ -20,6 +20,8 @@ static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
 pub struct AppState {
     pub db: sqlx::MySqlPool,
     pub jwt_secret: String,
+    pub lemon_pro_url: String,
+    pub lemon_enterprise_url: String,
 }
 
 #[tokio::main]
@@ -45,9 +47,14 @@ async fn main() -> Result<(), sqlx::Error> {
 
     let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
 
+    let lemon_pro_url = env::var("LEMON_PRO_URL").expect("LEMON_PRO_URL must be set");
+    let lemon_enterprise_url = env::var("LEMON_ENTERPRISE_URL").unwrap_or_default();
+
     let state = AppState {
         db: pool,
         jwt_secret,
+        lemon_pro_url,
+        lemon_enterprise_url,
     };
 
     // Tera templates
@@ -67,6 +74,7 @@ async fn main() -> Result<(), sqlx::Error> {
             routes::api_auth_routes().with_state(state.clone())
         )
         .nest_service("/static", ServeDir::new("static"))
+        .nest("/webhook", routes::lemon_routes::lemon_routes().with_state(state.clone()))
         .nest("/", routes::frontend_auth_routes().with_state(state.clone()))
         .route("/health", get(health_check))
         .layer(Extension(tera))
