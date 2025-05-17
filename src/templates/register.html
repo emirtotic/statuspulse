@@ -29,6 +29,15 @@
                 <input type="password" name="password" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
             </div>
 
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">Select your plan</label>
+                <select name="plan" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="free" selected>Free - Monitor up to 2 APIs</option>
+                    <option value="pro">Pro - $5/month for up to 15 APIs</option>
+                    <option value="enterprise">Enterprise - $20/month unlimited APIs</option>
+                </select>
+            </div>
+
             <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Create Account</button>
         </form>
 

@@ -11,6 +11,7 @@ pub struct RegisterRequest {
     pub name: String,
     pub email: String,
     pub password: String,
+    pub plan: String,
 }
 
 #[derive(Deserialize)]
@@ -64,7 +65,7 @@ pub async fn register(
 ) -> impl IntoResponse {
     let auth_service = AuthService::new(&state.db, &state.jwt_secret);
 
-    match auth_service.register_user(&form.name, &form.email, &form.password).await {
+    match auth_service.register_user(&form.name, &form.email, &form.password, &form.plan).await {
         Ok(_) => {
             tracing::info!("✅ Registration successful");
 

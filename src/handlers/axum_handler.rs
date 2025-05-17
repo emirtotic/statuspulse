@@ -10,6 +10,7 @@ use axum::extract::Path;
 use axum::response::IntoResponse;
 use serde::Deserialize;
 use crate::{AppState, db::monitor_repository::MonitorRepository, utils::jwt_auth::CurrentUser};
+use crate::db::user_repository::UserRepository;
 use crate::models::monitor::{EditMonitorForm, MonitorStatusSummary};
 
 
@@ -237,26 +238,69 @@ pub async fn create_monitor_form(
         Err(_) => return Redirect::to("/login").into_response(),
     };
 
-    let repo = MonitorRepository::new(&state.db);
+    let user_repo = UserRepository::new(&state.db);
+    let monitor_repo = MonitorRepository::new(&state.db);
 
-    // Try create monitor
-    match repo.create_monitor(user_id, &form.label, &form.url, form.interval_mins).await {
+    // Fetch user plan
+    let user_plan = match user_repo.get_user_plan(user_id).await {
+        Ok(Some(plan)) => plan,
+        Ok(None) => {
+            tracing::warn!("User plan not found for user_id: {}", user_id);
+            let mut flash_cookie = Cookie::new("flash", "User plan not found.");
+            flash_cookie.set_path("/monitors/new");
+            flash_cookie.set_max_age(time::Duration::seconds(5));
+            return (jar.add(flash_cookie), Redirect::to("/monitors/new")).into_response();
+        },
+        Err(_) => {
+            tracing::error!("Failed to fetch user plan for user_id: {}", user_id);
+            let mut flash_cookie = Cookie::new("flash", "Internal error fetching user plan.");
+            flash_cookie.set_path("/monitors/new");
+            flash_cookie.set_max_age(time::Duration::seconds(5));
+            return (jar.add(flash_cookie), Redirect::to("/monitors/new")).into_response();
+        }
+    };
+
+    // Count existing monitors
+    let monitor_count = match monitor_repo.count_user_monitors(user_id).await {
+        Ok(count) => count,
+        Err(_) => {
+            tracing::error!("Failed to count monitors for user_id: {}", user_id);
+            let mut flash_cookie = Cookie::new("flash", "Internal error counting monitors.");
+            flash_cookie.set_path("/monitors/new");
+            flash_cookie.set_max_age(time::Duration::seconds(5));
+            return (jar.add(flash_cookie), Redirect::to("/monitors/new")).into_response();
+        }
+    };
+
+    // Check if user can create more monitors based on plan
+    let allowed = match user_plan.as_str() {
+        "free" => monitor_count < 2,
+        "pro" => monitor_count < 15,
+        "enterprise" => true,
+        _ => false,
+    };
+
+    if !allowed {
+        tracing::error!("User {} reached monitor limit for plan '{}'", user_id, user_plan);
+        let mut flash_cookie = Cookie::new("flash", "Monitor limit reached for your plan.");
+        flash_cookie.set_path("/monitors/new");
+        flash_cookie.set_max_age(time::Duration::seconds(5));
+        return (jar.add(flash_cookie), Redirect::to("/monitors/new")).into_response();
+    }
+
+    // Create monitor
+    match monitor_repo.create_monitor(user_id, &form.label, &form.url, form.interval_mins).await {
         Ok(_) => Redirect::to("/dashboard").into_response(),
         Err(e) => {
             tracing::error!("Failed to create monitor: {:?}", e);
-
-            // Flash error message
             let mut flash_cookie = Cookie::new("flash", "Failed to create monitor.");
             flash_cookie.set_path("/monitors/new");
             flash_cookie.set_max_age(time::Duration::seconds(5));
-
-            (
-                jar.add(flash_cookie),
-                Redirect::to("/monitors/new")
-            ).into_response()
+            (jar.add(flash_cookie), Redirect::to("/monitors/new")).into_response()
         }
     }
 }
+
 
 #[axum::debug_handler]
 pub async fn edit_monitor_form(

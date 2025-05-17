@@ -27,7 +27,7 @@ impl<'a> UserRepository<'a> {
     pub async fn get_by_email(&self, email: &str) -> Result<Option<User>, sqlx::Error> {
         let row = sqlx::query(
             r#"
-            SELECT id, name, email, password_hash, created_at
+            SELECT id, name, email, password_hash, plan, created_at
             FROM users
             WHERE email = ?
             "#
@@ -42,6 +42,7 @@ impl<'a> UserRepository<'a> {
                 name: row.try_get("name")?,
                 email: row.try_get("email")?,
                 password_hash: row.try_get("password_hash")?,
+                plan: row.try_get("plan")?,
                 created_at: row.try_get("created_at")?,
             };
             Ok(Some(user))
@@ -61,19 +62,32 @@ impl<'a> UserRepository<'a> {
         Ok(count.0 > 0)
     }
 
-    pub async fn create_user(&self, name: &str, email: &str, password_hash: &str) -> Result<u64, sqlx::Error> {
+    pub async fn create_user(&self, name: &str, email: &str, password_hash: &str, plan: &str) -> Result<u64, sqlx::Error> {
         let result = sqlx::query(
             r#"
-            INSERT INTO users (name, email, password_hash)
-            VALUES (?, ?, ?)
+            INSERT INTO users (name, email, password_hash, plan)
+            VALUES (?, ?, ?, ?)
             "#
         )
             .bind(name)
             .bind(email)
             .bind(password_hash)
+            .bind(plan)
             .execute(self.pool)
             .await?;
 
         Ok(result.last_insert_id())
     }
+
+    pub async fn get_user_plan(&self, user_id: u64) -> Result<Option<String>, sqlx::Error> {
+        let rec = sqlx::query!(
+        "SELECT plan FROM users WHERE id = ?",
+        user_id
+    )
+            .fetch_optional(&*self.pool)
+            .await?;
+
+        Ok(rec.map(|r| r.plan))
+    }
+
 }

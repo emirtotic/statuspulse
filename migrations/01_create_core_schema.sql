@@ -36,3 +36,6 @@ CREATE TABLE IF NOT EXISTS alerts_sent (
     method VARCHAR(100) NOT NULL,
     FOREIGN KEY (monitor_id) REFERENCES monitors(id) ON DELETE CASCADE
 );
+
+ALTER TABLE users
+    ADD COLUMN plan ENUM('free', 'pro', 'enterprise') NOT NULL DEFAULT 'free';

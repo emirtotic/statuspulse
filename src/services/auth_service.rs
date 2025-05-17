@@ -41,7 +41,7 @@ impl<'a> AuthService<'a> {
         }
     }
 
-    pub async fn register_user(&self, name: &str, email: &str, password: &str) -> Result<String, AuthError> {
+    pub async fn register_user(&self, name: &str, email: &str, password: &str, plan: &str) -> Result<String, AuthError> {
         // Check if user already exists
         if let Ok(Some(_)) = self.repo.get_by_email(email).await {
             return Err(AuthError::UserExists);
@@ -55,7 +55,7 @@ impl<'a> AuthService<'a> {
             .to_string();
 
         // Insert into DB
-        let user_id = self.repo.create_user(name, email, &password_hash)
+        let user_id = self.repo.create_user(name, email, &password_hash, plan)
             .await
             .map_err(|_| AuthError::DatabaseError)?;
 

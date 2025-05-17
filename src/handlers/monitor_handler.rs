@@ -12,6 +12,8 @@ use crate::{
 };
 use serde::Deserialize;
 use crate::db::user_repository::UserRepository;
+use crate::db::status_log_repository::StatusLogRepository;
+use crate::models::status_log::StatusLog;
 
 #[derive(Deserialize)]
 pub struct CreateMonitorRequest {
@@ -26,6 +28,14 @@ pub struct UpdateMonitorRequest {
     pub url: Option<String>,
     pub interval_mins: Option<i32>,
     pub is_active: Option<bool>,
+}
+
+#[derive(serde::Serialize)]
+pub struct MonitorStatusSummary {
+    pub monitor_id: u64,
+    pub last_status: Option<StatusLog>,
+    pub uptime_percentage: f64,
+    pub average_response_time_ms: Option<f64>,
 }
 
 pub async fn list_monitors(
@@ -68,13 +78,46 @@ pub async fn create_monitor(
         return (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"error": "User not found"}))).into_response();
     }
 
-    let repo = MonitorRepository::new(&state.db);
+    // Fetch user's plan
+    let user_plan = match user_repo.get_user_plan(user_id).await {
+        Ok(Some(plan)) => plan,
+        Ok(None) => {
+            tracing::warn!("User plan not found for user_id: {}", user_id);
+            return (StatusCode::FORBIDDEN, Json(serde_json::json!({"error": "User plan not found"}))).into_response();
+        },
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": "Failed to fetch user plan"}))).into_response();
+        }
+    };
 
+    // Count existing monitors
+    let repo = MonitorRepository::new(&state.db);
+    let monitor_count = match repo.count_user_monitors(user_id).await {
+        Ok(count) => count,
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": "Failed to count monitors"}))).into_response();
+        }
+    };
+
+    // Check plan limits
+    let allowed = match user_plan.as_str() {
+        "free" => monitor_count < 2,
+        "pro" => monitor_count < 15,
+        "enterprise" => true,
+        _ => false,
+    };
+
+    if !allowed {
+        return (StatusCode::FORBIDDEN, Json(serde_json::json!({"error": "Monitor limit reached for your plan"}))).into_response();
+    }
+
+    // Proceed to create monitor
     match repo.create_monitor(user_id, &payload.label, &payload.url, payload.interval_mins).await {
         Ok(id) => (StatusCode::CREATED, Json(serde_json::json!({ "id": id }))).into_response(),
         Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": "Failed to create monitor"}))).into_response(),
     }
 }
+
 
 pub async fn delete_monitor(
     State(state): State<AppState>,
@@ -199,17 +242,6 @@ pub async fn list_active_monitors(
             (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": "Failed to fetch active monitors"}))).into_response()
         }
     }
-}
-
-use crate::db::status_log_repository::StatusLogRepository;
-use crate::models::status_log::StatusLog;
-
-#[derive(serde::Serialize)]
-pub struct MonitorStatusSummary {
-    pub monitor_id: u64,
-    pub last_status: Option<StatusLog>,
-    pub uptime_percentage: f64,
-    pub average_response_time_ms: Option<f64>,
 }
 
 pub async fn get_monitor_status(

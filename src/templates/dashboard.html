@@ -2,23 +2,23 @@
 
 {% block title %}Dashboard - StatusPulse{% endblock title %}
 
-{% block content %}
+{% block content %} <br><br>
 
 <div class="flex items-center justify-between mb-8">
     <h1 class="text-3xl font-bold text-gray-800">Monitors</h1>
-    <a href="/monitors/new" class="inline-flex items-center px-5 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition text-sm font-medium">
+    <a href="/monitors/new" class="inline-flex items-center px-5 py-2 bg-yellow-500 text-white rounded-xl hover:bg-black transition text-sm font-medium">
         + Add Monitor
     </a>
 </div>
 
 {% if monitors | length == 0 %}
-<div class="bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-xl p-6 text-center">
+<div class="bg-yellow-50 text-yellow-500 border border-yellow-200 rounded-xl p-6 text-center">
     <p>No monitors found. <a href="/monitors/new" class="underline text-blue-600 hover:text-blue-800">Create your first monitor</a></p>
 </div>
 {% else %}
 <div class="overflow-x-auto shadow-lg rounded-2xl border border-neutral-200">
     <table class="min-w-full bg-white text-sm">
-        <thead class="bg-neutral-100 text-neutral-700 uppercase text-xs font-semibold">
+        <thead class="bg-yellow-500 text-neutral-700 uppercase text-xs font-semibold">
         <tr>
             <th class="px-6 py-3 text-left">Label</th>
             <th class="px-6 py-3 text-left">URL</th>

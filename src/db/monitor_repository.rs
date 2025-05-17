@@ -268,6 +268,7 @@ impl<'a> MonitorRepository<'a> {
                 name: row.try_get("name").unwrap(),
                 email: row.try_get("email").unwrap(),
                 password_hash: row.try_get("password_hash").unwrap(),
+                plan: row.try_get("plan").unwrap(),
                 created_at: row.try_get("created_at").ok(),
             };
             Ok(Some(user))
@@ -275,5 +276,17 @@ impl<'a> MonitorRepository<'a> {
             Ok(None)
         }
     }
+
+    pub async fn count_user_monitors(&self, user_id: u64) -> Result<u64, sqlx::Error> {
+        let rec = sqlx::query!(
+        "SELECT COUNT(*) as count FROM monitors WHERE user_id = ?",
+        user_id
+    )
+            .fetch_one(self.pool)
+            .await?;
+
+        Ok(rec.count as u64)
+    }
+
 
 }

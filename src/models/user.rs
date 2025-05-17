@@ -5,11 +5,12 @@ use crate::utils::datetime::serialize_offset_datetime;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct User {
-
     pub id: u64,
     pub name: String,
     pub email: String,
     pub password_hash: String,
+    pub plan: String,
     #[serde(serialize_with = "serialize_offset_datetime")]
     pub created_at: Option<OffsetDateTime>,
 }
+

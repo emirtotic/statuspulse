@@ -17,24 +17,28 @@
         <a href="/" class="flex items-center space-x-2">
             <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-14 w-auto">
         </a>
-        <nav class="flex items-center gap-6 text-base font-medium text-gray-600">
-            <a href="/" class="hover:text-blue-600 transition">Home</a>
-            <a href="/#features" class="hover:text-blue-600 transition">About</a>
-            <a href="/dashboard" class="hover:text-blue-600 transition">Dashboard</a>
-            <a href="/logout" class="hover:text-red-500 transition">Logout</a>
-        </nav>
+
+        <div class="hidden sm:flex items-center space-x-4">
+            <a href="/" class="px-4 py-2 bg-black text-white text-sm font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Home</a>
+            <a href="/#features" class="px-4 py-2 bg-black text-white text-sm font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">About</a>
+
+            {% if current_user is defined %}
+            <a href="/dashboard" class="px-4 py-2 bg-black text-white text-sm font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">My Account</a>
+            <a href="/logout" class="px-4 py-2 bg-black text-white text-sm font-medium rounded-xl shadow-md hover:bg-red-600 transition">Logout</a>
+            {% else %}
+            <a href="/register" class="px-4 py-2 bg-black text-white text-sm font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Register</a>
+            <a href="/login" class="px-4 py-2 bg-black text-white text-sm font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Login</a>
+            {% endif %}
+        </div>
     </div>
 </header>
 
-<!-- Spacer for fixed navbar -->
 <div class="h-16"></div>
 
-<!-- Main Content -->
 <main class="flex-grow max-w-7xl mx-auto px-6 py-10">
     {% block content %}{% endblock content %}
 </main>
 
-<!-- Footer -->
 <footer class="w-full bg-neutral-100 border-t border-neutral-200 py-6 text-center text-sm text-neutral-500">
     <div class="flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto px-6">
         <p>StatusPulse &copy; {{ now() | date(format="%Y") }}</p>
