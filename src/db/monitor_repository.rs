@@ -252,7 +252,7 @@ impl<'a> MonitorRepository<'a> {
 
         let row = sqlx::query(
             r#"
-        SELECT users.id, users.name, users.email, users.password_hash, users.created_at
+        SELECT users.id, users.name, users.email, users.password_hash, users.created_at, users.plan
         FROM users
         JOIN monitors ON monitors.user_id = users.id
         WHERE monitors.id = ?

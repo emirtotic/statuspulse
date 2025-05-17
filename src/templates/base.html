@@ -6,7 +6,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 92px;
+        }
+        body { font-family: 'Inter', sans-serif;
+        }
     </style>
 </head>
 <body class="bg-white text-neutral-900 flex flex-col min-h-screen">
@@ -18,24 +23,26 @@
             <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-14 w-auto">
         </a>
 
-        <div class="hidden sm:flex items-center space-x-4">
-            <a href="/" class="px-4 py-2 bg-black text-white text-sm font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Home</a>
-            <a href="/#features" class="px-4 py-2 bg-black text-white text-sm font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">About</a>
-
+        <div class="hidden sm:flex items-center space-x-3">
             {% if current_user is defined %}
-            <a href="/dashboard" class="px-4 py-2 bg-black text-white text-sm font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">My Account</a>
-            <a href="/logout" class="px-4 py-2 bg-black text-white text-sm font-medium rounded-xl shadow-md hover:bg-red-600 transition">Logout</a>
+            <!-- Logged-in navbar -->
+            <a href="/" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Home</a>
+            <a href="/#features" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
+            <a href="/logout" class="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition">Logout</a>
             {% else %}
-            <a href="/register" class="px-4 py-2 bg-black text-white text-sm font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Register</a>
-            <a href="/login" class="px-4 py-2 bg-black text-white text-sm font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Login</a>
+            <!-- Guest navbar -->
+            <a href="/login" class="px-4 py-2 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">Login</a>
+            <a href="/#features" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
+            <a href="/register" class="px-4 py-2 text-sm font-medium border border-black text-black rounded-xl hover:bg-neutral-100 transition">Get Started</a>
             {% endif %}
         </div>
     </div>
 </header>
 
-<div class="h-16"></div>
+<!-- Spacer to push content below fixed navbar -->
+<div class="h-20"></div>
 
-<main class="flex-grow max-w-7xl mx-auto px-6 py-10">
+<main class="flex-grow w-full px-6 py-10">
     {% block content %}{% endblock content %}
 </main>
 

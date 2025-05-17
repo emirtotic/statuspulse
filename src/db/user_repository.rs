@@ -90,4 +90,45 @@ impl<'a> UserRepository<'a> {
         Ok(rec.map(|r| r.plan))
     }
 
+    pub async fn get_user_by_id(&self, user_id: u64) -> Result<Option<User>, sqlx::Error> {
+        let row = sqlx::query(
+            r#"
+        SELECT id, name, email, password_hash, plan, created_at
+        FROM users
+        WHERE id = ?
+        "#
+        )
+            .bind(user_id)
+            .fetch_optional(self.pool)
+            .await?;
+
+        if let Some(row) = row {
+            let user = User {
+                id: row.try_get("id")?,
+                name: row.try_get("name")?,
+                email: row.try_get("email")?,
+                password_hash: row.try_get("password_hash")?,
+                plan: row.try_get("plan")?,
+                created_at: row.try_get("created_at")?,
+            };
+            Ok(Some(user))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn update_user_plan(&self, user_id: u64, new_plan: &str) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+        "UPDATE users SET plan = ? WHERE id = ?",
+        new_plan,
+        user_id
+    )
+            .execute(self.pool)
+            .await?;
+
+        Ok(())
+    }
+
+
+
 }

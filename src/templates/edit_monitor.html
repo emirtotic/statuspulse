@@ -3,29 +3,33 @@
 {% block title %}Edit Monitor - StatusPulse{% endblock title %}
 
 {% block content %}
-<div class="flex flex-col items-center justify-center min-h-[80vh]">
-    <div class="w-full max-w-xl bg-white p-8 rounded-xl shadow-lg">
-        <h2 class="text-2xl font-semibold text-center text-gray-800 mb-6">Edit Monitor</h2>
+<div class="flex flex-col items-center justify-center min-h-[80vh] px-4">
+    <div class="w-full max-w-3xl bg-white p-10 rounded-4xl shadow-xl border border-neutral-200">
+        <h2 class="text-3xl font-bold text-center text-gray-900 mb-10">Edit Monitor</h2>
 
-        <form method="post" action="/monitors/{{ monitor.id }}/edit" class="space-y-5">
+        <form method="post" action="/monitors/{{ monitor.id }}/edit" class="space-y-8">
             <div>
-                <label class="block text-sm font-medium text-gray-600 mb-1">Label</label>
-                <input type="text" name="label" value="{{ monitor.label }}" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                <label class="block text-lg font-medium text-gray-700 mb-2">Label</label>
+                <input type="text" name="label" value="{{ monitor.label }}" required
+                       class="w-full px-5 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-base">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-600 mb-1">URL</label>
-                <input type="url" name="url" value="{{ monitor.url }}" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                <label class="block text-lg font-medium text-gray-700 mb-2">URL</label>
+                <input type="url" name="url" value="{{ monitor.url }}" required
+                       class="w-full px-5 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-base">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-600 mb-1">Interval (minutes)</label>
-                <input type="number" name="interval_mins" value="{{ monitor.interval_mins }}" min="1" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                <label class="block text-lg font-medium text-gray-700 mb-2">Interval (minutes)</label>
+                <input type="number" name="interval_mins" value="{{ monitor.interval_mins }}" min="1" required
+                       class="w-full px-5 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-base">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-600 mb-1">Status</label>
-                <select name="is_active" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                <label class="block text-lg font-medium text-gray-700 mb-2">Status</label>
+                <select name="is_active"
+                        class="w-full px-5 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-base">
                     <option value="true" {% if monitor.is_active %}selected{% endif %}>Active</option>
                     <option value="false" {% if not monitor.is_active %}selected{% endif %}>Inactive</option>
                 </select>
@@ -33,7 +37,10 @@
 
             <div class="flex justify-between items-center">
                 <a href="/dashboard" class="text-sm text-blue-600 hover:underline">← Back to Dashboard</a>
-                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Update Monitor</button>
+                <button type="submit"
+                        class="px-6 py-3 bg-blue-600 text-white text-base font-semibold rounded-xl hover:bg-blue-700 transition">
+                    Update Monitor
+                </button>
             </div>
         </form>
     </div>

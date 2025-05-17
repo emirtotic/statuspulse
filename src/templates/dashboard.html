@@ -1,72 +1,102 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - StatusPulse{% endblock title %}
+{% block title %}StatusPulse - API Monitoring{% endblock title %}
 
-{% block content %} <br><br>
+{% block content %}
 
-<div class="flex items-center justify-between mb-8">
-    <h1 class="text-3xl font-bold text-gray-800">Monitors</h1>
-    <a href="/monitors/new" class="inline-flex items-center px-5 py-2 bg-yellow-500 text-white rounded-xl hover:bg-black transition text-sm font-medium">
-        + Add Monitor
-    </a>
-</div>
+<!-- Hero Section -->
+<section class="py-24 bg-gray-50 text-center">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-end items-center mb-4">
+            {% if user_plan == "free" %}
+            <span class="text-xs font-bold text-yellow-800 bg-yellow-100 border border-yellow-300 px-4 py-1 rounded-xl tracking-wide">
+        PLAN: FREE
+    </span>
+            {% elif user_plan == "pro" %}
+            <span class="text-xs font-bold text-orange-800 bg-orange-100 border border-orange-300 px-4 py-1 rounded-xl tracking-wide">
+        PLAN: PRO
+    </span>
+            {% elif user_plan == "enterprise" %}
+            <span class="text-xs font-bold text-red-800 bg-red-100 border border-red-300 px-4 py-1 rounded-xl tracking-wide">
+        PLAN: ENTERPRISE
+    </span>
+            {% endif %}
+        </div>
 
-{% if monitors | length == 0 %}
-<div class="bg-yellow-50 text-yellow-500 border border-yellow-200 rounded-xl p-6 text-center">
-    <p>No monitors found. <a href="/monitors/new" class="underline text-blue-600 hover:text-blue-800">Create your first monitor</a></p>
-</div>
-{% else %}
-<div class="overflow-x-auto shadow-lg rounded-2xl border border-neutral-200">
-    <table class="min-w-full bg-white text-sm">
-        <thead class="bg-yellow-500 text-neutral-700 uppercase text-xs font-semibold">
-        <tr>
-            <th class="px-6 py-3 text-left">Label</th>
-            <th class="px-6 py-3 text-left">URL</th>
-            <th class="px-6 py-3 text-center">Status</th>
-            <th class="px-6 py-3 text-center">Interval</th>
-            <th class="px-6 py-3 text-center">Uptime</th>
-            <th class="px-6 py-3 text-center">Actions</th>
-        </tr>
-        </thead>
-        <tbody class="divide-y divide-neutral-200">
-        {% for monitor in monitors %}
-        <tr class="hover:bg-neutral-50">
-            <td class="px-6 py-4 font-medium text-gray-900">{{ monitor.label }}</td>
-            <td class="px-6 py-4 max-w-xs truncate">
-                <a href="{{ monitor.url }}" target="_blank" class="text-blue-600 hover:underline">
-                    {{ monitor.url | truncate(length=50, end="...") }}
-                </a>
-            </td>
-            <td class="px-6 py-4 text-center">
-                {% if monitor.is_active %}
-                <span class="inline-flex items-center gap-1 text-green-600 font-medium">
+        <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight">
+            {{ user_name }} — API Dashboard
+        </h1>
+        <br><br>
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Your URL's</h1>
+            <a href="/monitors/new"
+               class="inline-flex items-center px-5 py-2 bg-yellow-500 text-white rounded-xl hover:bg-black transition text-sm font-medium">
+                + Add Monitor
+            </a>
+        </div>
+
+        {% if monitors | length == 0 %}
+        <div class="bg-yellow-50 text-yellow-500 border border-yellow-200 rounded-xl p-6 text-center">
+            <p>No monitors found. <a href="/monitors/new" class="underline text-blue-600 hover:text-blue-800">Create
+                your first monitor</a></p>
+        </div>
+        {% else %}
+        <div class="overflow-x-auto shadow-lg rounded-2xl border border-neutral-200">
+            <table class="min-w-full bg-white text-sm">
+                <thead class="bg-yellow-500 text-neutral-700 uppercase text-xs font-semibold">
+                <tr>
+                    <th class="px-6 py-3 text-center">Label</th>
+                    <th class="px-6 py-3 text-center">URL</th>
+                    <th class="px-6 py-3 text-center">Status</th>
+                    <th class="px-6 py-3 text-center">Interval</th>
+                    <th class="px-6 py-3 text-center">Uptime</th>
+                    <th class="px-6 py-3 text-center">Actions</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-neutral-200">
+                {% for monitor in monitors %}
+                <tr class="hover:bg-neutral-50">
+                    <td class="px-6 py-4 font-medium text-gray-900 text-center">{{ monitor.label }}</td>
+                    <td class="px-6 py-4 max-w-xs truncate text-center">
+                        <a href="{{ monitor.url }}" target="_blank" class="text-blue-600 hover:underline">
+                            {{ monitor.url | truncate(length=50, end="...") }}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        {% if monitor.is_active %}
+                        <span class="inline-flex items-center gap-1 text-green-600 font-medium">
                             ● Active
                         </span>
-                {% else %}
-                <span class="inline-flex items-center gap-1 text-red-600 font-medium">
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 text-red-600 font-medium">
                             ● Inactive
                         </span>
-                {% endif %}
-            </td>
-            <td class="px-6 py-4 text-center">{{ monitor.interval_mins }} min</td>
-            <td class="px-6 py-4 text-center">
-                {% if monitor.uptime_percentage is defined %}
-                {{ monitor.uptime_percentage | round(precision=2) }}%
-                {% else %}
-                N/A
-                {% endif %}
-            </td>
-            <td class="px-6 py-4 text-center space-x-2">
-                <a href="/monitors/{{ monitor.id }}/edit" class="text-blue-600 hover:underline">Edit</a>
-                <form action="/monitors/{{ monitor.id }}/delete" method="post" class="inline">
-                    <button type="submit" class="text-red-600 hover:underline" onclick="return confirm('Are you sure?');">Delete</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endif %}
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-center">{{ monitor.interval_mins }} min</td>
+                    <td class="px-6 py-4 text-center">
+                        {% if monitor.uptime_percentage is defined %}
+                        {{ monitor.uptime_percentage | round(precision=2) }}%
+                        {% else %}
+                        N/A
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-center space-x-2">
+                        <a href="/monitors/{{ monitor.id }}/edit" class="text-blue-600 hover:underline">Edit</a>
+                        <form action="/monitors/{{ monitor.id }}/delete" method="post" class="inline">
+                            <button type="submit" class="text-red-600 hover:underline"
+                                    onclick="return confirm('Are you sure?');">Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
 
 {% endblock content %}
