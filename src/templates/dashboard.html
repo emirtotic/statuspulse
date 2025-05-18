@@ -47,9 +47,9 @@
                 <tr>
                     <th class="px-6 py-3 text-center">Label</th>
                     <th class="px-6 py-3 text-center">URL</th>
-                    <th class="px-6 py-3 text-center">Status</th>
+                    <th class="px-6 py-3 text-center">Monitor Status</th>
                     <th class="px-6 py-3 text-center">Interval</th>
-                    <th class="px-6 py-3 text-center">Uptime</th>
+                    <th class="px-6 py-3 text-center">API Health</th>
                     <th class="px-6 py-3 text-center">Actions</th>
                 </tr>
                 </thead>
@@ -75,10 +75,12 @@
                     </td>
                     <td class="px-6 py-4 text-center">{{ monitor.interval_mins }} min</td>
                     <td class="px-6 py-4 text-center">
-                        {% if monitor.uptime_percentage is defined %}
-                        {{ monitor.uptime_percentage | round(precision=2) }}%
+                        {% if monitor.is_up == true %}
+                        <span class="inline-flex items-center gap-1 text-green-600 font-medium">● UP</span>
+                        {% elif monitor.is_up == false %}
+                        <span class="inline-flex items-center gap-1 text-red-600 font-medium">● DOWN</span>
                         {% else %}
-                        N/A
+                        <span class="inline-flex items-center gap-1 text-gray-500 font-medium">● Unknown</span>
                         {% endif %}
                     </td>
                     <td class="px-6 py-4 text-center space-x-2">

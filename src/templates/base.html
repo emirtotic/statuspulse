@@ -38,7 +38,13 @@
         <!-- Desktop Menu -->
         <nav class="hidden sm:flex items-center space-x-3">
             {% if current_user is defined %}
+            
+            {% if on_dashboard %}
+            <a href="/" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Home</a>
+            {% else %}
             <a href="/dashboard" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Dashboard</a>
+            {% endif %}
+
             <a href="/#features" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
             <a href="/logout" class="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition">Logout</a>
             {% else %}

@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(100) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
+    plan ENUM('free', 'pro', 'enterprise') NOT NULL DEFAULT 'free',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -13,6 +14,7 @@ CREATE TABLE IF NOT EXISTS monitors (
     url TEXT NOT NULL,
     interval_mins INT NOT NULL DEFAULT 5,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_up BOOLEAN DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -37,5 +39,3 @@ CREATE TABLE IF NOT EXISTS alerts_sent (
     FOREIGN KEY (monitor_id) REFERENCES monitors(id) ON DELETE CASCADE
 );
 
-ALTER TABLE users
-    ADD COLUMN plan ENUM('free', 'pro', 'enterprise') NOT NULL DEFAULT 'free';

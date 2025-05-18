@@ -1,5 +1,9 @@
 use crate::{
-    db::{monitor_repository::MonitorRepository, status_log_repository::StatusLogRepository, alert_sent_repository::AlertSentRepository},
+    db::{
+        monitor_repository::MonitorRepository,
+        status_log_repository::StatusLogRepository,
+        alert_sent_repository::AlertSentRepository,
+    },
     services::sendgrid_service::SendGridService,
     AppState,
 };
@@ -48,10 +52,9 @@ pub async fn start_worker(state: AppState) {
                                 let mut map = next_check_times.lock().await;
                                 if let Some(next_check) = map.get(&monitor.id) {
                                     if &now < next_check {
-                                        return; // Not time yet, skip this monitor
+                                        return;
                                     }
                                 }
-                                // Schedule next check
                                 map.insert(monitor.id, now + TimeDuration::minutes(monitor.interval_mins.into()));
                             }
 
@@ -80,6 +83,10 @@ pub async fn start_worker(state: AppState) {
                                     ).await {
                                         error!("Failed to insert status log: {:?}", e);
                                     }
+
+                                    if let Err(e) = monitor_repo.update_is_up(monitor_id, true).await {
+                                        error!("Failed to update is_up=true for monitor {}: {:?}", monitor_id, e);
+                                    }
                                 }
                                 Err(e) => {
                                     error!("Error pinging {}: {:?}", url, e);
@@ -94,7 +101,10 @@ pub async fn start_worker(state: AppState) {
                                         error!("Failed to insert error log: {:?}", e);
                                     }
 
-                                    // ALERT LOGIC (cooldown 8h)
+                                    if let Err(e) = monitor_repo.update_is_up(monitor_id, false).await {
+                                        error!("Failed to update is_up=false for monitor {}: {:?}", monitor_id, e);
+                                    }
+
                                     let since = OffsetDateTime::now_utc() - TimeDuration::hours(8);
 
                                     match monitor_repo.get_monitor_owner(monitor_id).await {
@@ -115,9 +125,7 @@ pub async fn start_worker(state: AppState) {
                                                             &subject,
                                                             "src/services/email_templates/monitor_down.html",
                                                             replacements,
-                                                        )
-                                                        .await
-                                                    {
+                                                        ).await {
                                                         error!("Failed to send alert email: {:?}", e);
                                                     } else {
                                                         if let Err(e) = alerts_repo.insert_alert(monitor_id, "email", "sendgrid").await {

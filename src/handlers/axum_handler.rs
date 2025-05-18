@@ -1,20 +1,17 @@
-use axum::{Extension, response::Html, Form};
+use axum::{response::Html, Extension, Form};
 use axum_extra::extract::cookie::{Cookie, CookieJar};
 use tera::Tera;
 
-use axum::{
-    extract::{State},
-    response::{Redirect},
-};
-use axum::extract::Path;
-use axum::response::IntoResponse;
-use serde::Deserialize;
-use crate::{AppState, db::monitor_repository::MonitorRepository, utils::jwt_auth::CurrentUser};
 use crate::db::user_repository::UserRepository;
 use crate::models::monitor::{EditMonitorForm, MonitorStatusSummary};
 use crate::utils::jwt_auth;
+use crate::{db::monitor_repository::MonitorRepository, utils::jwt_auth::CurrentUser, AppState};
+use axum::extract::Path;
+use axum::response::IntoResponse;
 use axum::response::Response;
+use axum::{extract::State, response::Redirect};
 use http::{header, HeaderValue, StatusCode};
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct CreateMonitorForm {
@@ -51,10 +48,7 @@ pub async fn landing_page(
 }
 
 #[axum::debug_handler]
-pub async fn form_login(
-    Extension(tera): Extension<Tera>,
-    jar: CookieJar,
-) -> Html<String> {
+pub async fn form_login(Extension(tera): Extension<Tera>, jar: CookieJar) -> Html<String> {
     let mut ctx = tera::Context::new();
 
     if let Some(cookie) = jar.get("flash") {
@@ -66,10 +60,7 @@ pub async fn form_login(
 }
 
 #[axum::debug_handler]
-pub async fn form_register(
-    Extension(tera): Extension<Tera>,
-    jar: CookieJar,
-) -> Html<String> {
+pub async fn form_register(Extension(tera): Extension<Tera>, jar: CookieJar) -> Html<String> {
     let mut ctx = tera::Context::new();
 
     if let Some(cookie) = jar.get("flash") {
@@ -111,39 +102,34 @@ pub async fn dashboard(
         Err(_) => Vec::new(),
     };
 
-    let mut dashboard_data = Vec::new();
+    // Priprema podataka za šablon
+    let mut monitors_for_template = Vec::new();
 
     for monitor in &monitors {
-        let last_status = status_log_repo.get_last_status_log(monitor.id).await.ok().flatten();
-        let uptime_percentage = status_log_repo.get_uptime_percentage(monitor.id).await.unwrap_or(0.0);
-        let avg_response_time = status_log_repo.get_avg_response_time(monitor.id).await.unwrap_or(None);
+        let last_status = status_log_repo
+            .get_last_status_log(monitor.id)
+            .await
+            .ok()
+            .flatten();
 
-        dashboard_data.push(MonitorStatusSummary {
-            monitor_id: monitor.id,
-            last_status,
-            uptime_percentage,
-            average_response_time_ms: avg_response_time,
-        });
-    }
-
-    let monitors_for_template = dashboard_data.into_iter().map(|summary| {
-        let monitor = monitors.iter().find(|m| m.id == summary.monitor_id).unwrap();
-
-        serde_json::json!({
+        monitors_for_template.push(serde_json::json!({
             "id": monitor.id,
             "label": monitor.label,
             "url": monitor.url,
             "is_active": monitor.is_active,
             "interval_mins": monitor.interval_mins,
-            "uptime_percentage": summary.uptime_percentage,
-        })
-    }).collect::<Vec<_>>();
+            "is_up": monitor.is_up,
+            "last_status": last_status,
+        }));
+    }
 
+    // Kontekst za Tera
     let mut ctx = tera::Context::new();
     ctx.insert("monitors", &monitors_for_template);
     ctx.insert("current_user", &user_id);
     ctx.insert("user_name", &user.name);
     ctx.insert("user_plan", &user.plan);
+    ctx.insert("on_dashboard", &true);
 
     let rendered = tera.render("dashboard.html", &ctx).unwrap();
     html_no_cache(Html(rendered))
@@ -154,9 +140,8 @@ pub async fn logout(jar: CookieJar) -> impl IntoResponse {
     let mut auth_cookie = Cookie::named("auth_token");
     auth_cookie.set_path("/");
     auth_cookie.set_http_only(true);
-    auth_cookie.make_removal(); // sets max_age = 0, expires = past
+    auth_cookie.make_removal();
 
-    // DODATNO: osiguraj da expire bude u prošlosti ručno
     use time::OffsetDateTime;
     auth_cookie.set_expires(OffsetDateTime::UNIX_EPOCH);
 
@@ -164,10 +149,7 @@ pub async fn logout(jar: CookieJar) -> impl IntoResponse {
     flash_cookie.set_path("/login");
     flash_cookie.set_max_age(time::Duration::seconds(5));
 
-    (
-        jar.add(auth_cookie).add(flash_cookie),
-        Redirect::to("/")
-    )
+    (jar.add(auth_cookie).add(flash_cookie), Redirect::to("/"))
 }
 
 #[axum::debug_handler]
@@ -217,7 +199,6 @@ pub async fn form_edit_monitor(
     Path(monitor_id): Path<u64>,
     jar: CookieJar,
 ) -> impl IntoResponse {
-
     let token = if let Some(cookie) = jar.get("auth_token") {
         cookie.value().to_string()
     } else {
@@ -243,14 +224,12 @@ pub async fn form_edit_monitor(
     html_no_cache(Html(rendered)) // <- ovo sprečava da se forma učita iz cache-a nakon logout-a
 }
 
-
 #[axum::debug_handler]
 pub async fn delete_monitor_form(
     State(state): State<AppState>,
     jar: CookieJar,
     Path(monitor_id): Path<u64>,
 ) -> impl IntoResponse {
-
     let token = if let Some(cookie) = jar.get("auth_token") {
         cookie.value().to_string()
     } else {
@@ -269,7 +248,11 @@ pub async fn delete_monitor_form(
             tracing::info!("Monitor {} deleted by user {}", monitor_id, user_id);
         }
         Ok(_) => {
-            tracing::warn!("Monitor {} not found or unauthorized for user {}", monitor_id, user_id);
+            tracing::warn!(
+                "Monitor {} not found or unauthorized for user {}",
+                monitor_id,
+                user_id
+            );
         }
         Err(e) => {
             tracing::error!("Failed to delete monitor {}: {:?}", monitor_id, e);
@@ -310,7 +293,7 @@ pub async fn create_monitor_form(
             flash_cookie.set_path("/monitors/new");
             flash_cookie.set_max_age(time::Duration::seconds(5));
             return (jar.add(flash_cookie), Redirect::to("/monitors/new")).into_response();
-        },
+        }
         Err(_) => {
             tracing::error!("Failed to fetch user plan for user_id: {}", user_id);
             let mut flash_cookie = Cookie::new("flash", "Internal error fetching user plan.");
@@ -341,7 +324,11 @@ pub async fn create_monitor_form(
     };
 
     if !allowed {
-        tracing::error!("User {} reached monitor limit for plan '{}'", user_id, user_plan);
+        tracing::error!(
+            "User {} reached monitor limit for plan '{}'",
+            user_id,
+            user_plan
+        );
         let mut flash_cookie = Cookie::new("flash", "Monitor limit reached for your plan.");
         flash_cookie.set_path("/monitors/new");
         flash_cookie.set_max_age(time::Duration::seconds(5));
@@ -349,7 +336,10 @@ pub async fn create_monitor_form(
     }
 
     // Create monitor
-    match monitor_repo.create_monitor(user_id, &form.label, &form.url, form.interval_mins).await {
+    match monitor_repo
+        .create_monitor(user_id, &form.label, &form.url, form.interval_mins)
+        .await
+    {
         Ok(_) => Redirect::to("/dashboard").into_response(),
         Err(e) => {
             tracing::error!("Failed to create monitor: {:?}", e);
@@ -360,7 +350,6 @@ pub async fn create_monitor_form(
         }
     }
 }
-
 
 #[axum::debug_handler]
 pub async fn edit_monitor_form(
@@ -383,14 +372,17 @@ pub async fn edit_monitor_form(
 
     let repo = MonitorRepository::new(&state.db);
 
-    match repo.update_monitor(
-        monitor_id,
-        user_id,
-        &form.label,
-        &form.url,
-        form.interval_mins,
-        is_active,
-    ).await {
+    match repo
+        .update_monitor(
+            monitor_id,
+            user_id,
+            &form.label,
+            &form.url,
+            form.interval_mins,
+            is_active,
+        )
+        .await
+    {
         Ok(affected) if affected > 0 => {
             tracing::info!("Monitor {} updated by user {}", monitor_id, user_id);
 
@@ -398,13 +390,14 @@ pub async fn edit_monitor_form(
             flash_cookie.set_path("/dashboard");
             flash_cookie.set_max_age(time::Duration::seconds(5));
 
-            return (
-                jar.add(flash_cookie),
-                Redirect::to("/dashboard")
-            ).into_response();
+            return (jar.add(flash_cookie), Redirect::to("/dashboard")).into_response();
         }
         Ok(_) => {
-            tracing::warn!("Monitor {} not found or unauthorized for user {}", monitor_id, user_id);
+            tracing::warn!(
+                "Monitor {} not found or unauthorized for user {}",
+                monitor_id,
+                user_id
+            );
         }
         Err(e) => {
             tracing::error!("Failed to update monitor {}: {:?}", monitor_id, e);
@@ -415,23 +408,19 @@ pub async fn edit_monitor_form(
 }
 
 #[axum::debug_handler]
-pub async fn error_page(
-    Extension(tera): Extension<Tera>,
-) -> impl IntoResponse {
-    let rendered = tera.render("error.html", &tera::Context::new()).unwrap_or_else(|_| {
-        "<h1>Error</h1><p>Something went wrong.</p>".to_string()
-    });
+pub async fn error_page(Extension(tera): Extension<Tera>) -> impl IntoResponse {
+    let rendered = tera
+        .render("error.html", &tera::Context::new())
+        .unwrap_or_else(|_| "<h1>Error</h1><p>Something went wrong.</p>".to_string());
 
     (StatusCode::NOT_FOUND, Html(rendered))
 }
 
 #[axum::debug_handler]
-pub async fn internal_error_page(
-    Extension(tera): Extension<Tera>,
-) -> impl IntoResponse {
-    let rendered = tera.render("error_500.html", &tera::Context::new()).unwrap_or_else(|_| {
-        "<h1>500 Internal Server Error</h1><p>We're sorry!</p>".to_string()
-    });
+pub async fn internal_error_page(Extension(tera): Extension<Tera>) -> impl IntoResponse {
+    let rendered = tera
+        .render("error_500.html", &tera::Context::new())
+        .unwrap_or_else(|_| "<h1>500 Internal Server Error</h1><p>We're sorry!</p>".to_string());
 
     (StatusCode::INTERNAL_SERVER_ERROR, Html(rendered))
 }
@@ -439,9 +428,11 @@ pub async fn internal_error_page(
 fn html_no_cache(body: Html<String>) -> Response {
     let mut res = body.into_response();
     let headers = res.headers_mut();
-    headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store, no-cache, must-revalidate, max-age=0"));
+    headers.insert(
+        header::CACHE_CONTROL,
+        HeaderValue::from_static("no-store, no-cache, must-revalidate, max-age=0"),
+    );
     headers.insert(header::PRAGMA, HeaderValue::from_static("no-cache"));
     headers.insert(header::EXPIRES, HeaderValue::from_static("0"));
     res
 }
-

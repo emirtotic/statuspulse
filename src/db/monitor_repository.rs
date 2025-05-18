@@ -16,7 +16,7 @@ impl<'a> MonitorRepository<'a> {
 
         let rows = sqlx::query(
             r#"
-            SELECT id, user_id, label, url, interval_mins, is_active, created_at
+            SELECT id, user_id, label, url, interval_mins, is_active, is_up, created_at
             FROM monitors
             WHERE user_id = ?
             "#
@@ -33,6 +33,7 @@ impl<'a> MonitorRepository<'a> {
                 url: row.try_get("url").unwrap(),
                 interval_mins: row.try_get("interval_mins").unwrap(),
                 is_active: row.try_get("is_active").unwrap(),
+                is_up: row.try_get("is_up").unwrap(),
                 created_at: row.try_get("created_at").ok(),
             }
         }).collect();
@@ -131,7 +132,7 @@ impl<'a> MonitorRepository<'a> {
 
         let row = sqlx::query(
             r#"
-            SELECT id, user_id, label, url, interval_mins, is_active, created_at
+            SELECT id, user_id, label, url, interval_mins, is_active, is_up, created_at
             FROM monitors
             WHERE id = ? AND user_id = ?
             "#
@@ -149,6 +150,7 @@ impl<'a> MonitorRepository<'a> {
                 url: row.try_get("url")?,
                 interval_mins: row.try_get("interval_mins")?,
                 is_active: row.try_get("is_active")?,
+                is_up: row.try_get("is_up")?,
                 created_at: row.try_get("created_at").ok(),
             };
             Ok(Some(monitor))
@@ -162,7 +164,7 @@ impl<'a> MonitorRepository<'a> {
 
         let rows = sqlx::query(
             r#"
-        SELECT id, user_id, label, url, interval_mins, is_active, created_at
+        SELECT id, user_id, label, url, interval_mins, is_active, is_up, created_at
         FROM monitors
         WHERE is_active = true
         "#
@@ -178,6 +180,7 @@ impl<'a> MonitorRepository<'a> {
                 url: row.try_get("url").unwrap(),
                 interval_mins: row.try_get("interval_mins").unwrap(),
                 is_active: row.try_get("is_active").unwrap(),
+                is_up: row.try_get("is_up").unwrap(),
                 created_at: row.try_get("created_at").ok(),
             }
         }).collect();
@@ -192,7 +195,7 @@ impl<'a> MonitorRepository<'a> {
 
         let rows = sqlx::query(
             r#"
-            SELECT id, user_id, label, url, interval_mins, is_active, created_at
+            SELECT id, user_id, label, url, interval_mins, is_active, is_up, created_at
             FROM monitors
             WHERE user_id = ?
             AND is_active = false
@@ -210,6 +213,7 @@ impl<'a> MonitorRepository<'a> {
                 url: row.try_get("url").unwrap(),
                 interval_mins: row.try_get("interval_mins").unwrap(),
                 is_active: row.try_get("is_active").unwrap(),
+                is_up: row.try_get("is_up").unwrap(),
                 created_at: row.try_get("created_at").ok(),
             }
         }).collect();
@@ -222,7 +226,7 @@ impl<'a> MonitorRepository<'a> {
 
         let rows = sqlx::query(
             r#"
-            SELECT id, user_id, label, url, interval_mins, is_active, created_at
+            SELECT id, user_id, label, url, interval_mins, is_active, is_up, created_at
             FROM monitors
             WHERE user_id = ?
             AND is_active = true
@@ -240,6 +244,7 @@ impl<'a> MonitorRepository<'a> {
                 url: row.try_get("url").unwrap(),
                 interval_mins: row.try_get("interval_mins").unwrap(),
                 is_active: row.try_get("is_active").unwrap(),
+                is_up: row.try_get("is_up").unwrap(),
                 created_at: row.try_get("created_at").ok(),
             }
         }).collect();
@@ -278,15 +283,40 @@ impl<'a> MonitorRepository<'a> {
     }
 
     pub async fn count_user_monitors(&self, user_id: u64) -> Result<u64, sqlx::Error> {
-        let rec = sqlx::query!(
-        "SELECT COUNT(*) as count FROM monitors WHERE user_id = ?",
-        user_id
-    )
+        let row = sqlx::query("SELECT COUNT(*) as count FROM monitors WHERE user_id = ?")
+            .bind(user_id)
             .fetch_one(self.pool)
             .await?;
 
-        Ok(rec.count as u64)
+        let count: i64 = row.try_get("count")?;
+        Ok(count as u64)
     }
+
+
+    pub async fn update_is_up(&self, monitor_id: u64, is_up: bool) -> Result<u64, sqlx::Error> {
+        tracing::info!(
+        "Updating monitor_id {} → is_up = {}",
+        monitor_id,
+        is_up
+    );
+
+        let result = sqlx::query(
+            r#"
+        UPDATE monitors
+        SET is_up = ?
+        WHERE id = ?
+        "#
+        )
+            .bind(is_up)
+            .bind(monitor_id)
+            .execute(self.pool)
+            .await?;
+
+        Ok(result.rows_affected())
+    }
+
+
+
 
 
 }

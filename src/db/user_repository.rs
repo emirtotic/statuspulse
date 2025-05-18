@@ -80,14 +80,19 @@ impl<'a> UserRepository<'a> {
     }
 
     pub async fn get_user_plan(&self, user_id: u64) -> Result<Option<String>, sqlx::Error> {
-        let rec = sqlx::query!(
-        "SELECT plan FROM users WHERE id = ?",
-        user_id
-    )
-            .fetch_optional(&*self.pool)
+        let row = sqlx::query(
+            "SELECT plan FROM users WHERE id = ?"
+        )
+            .bind(user_id)
+            .fetch_optional(self.pool)
             .await?;
 
-        Ok(rec.map(|r| r.plan))
+        if let Some(row) = row {
+            let plan: String = row.try_get("plan")?;
+            Ok(Some(plan))
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn get_user_by_id(&self, user_id: u64) -> Result<Option<User>, sqlx::Error> {
@@ -118,17 +123,15 @@ impl<'a> UserRepository<'a> {
     }
 
     pub async fn update_user_plan(&self, user_id: u64, new_plan: &str) -> Result<(), sqlx::Error> {
-        sqlx::query!(
-        "UPDATE users SET plan = ? WHERE id = ?",
-        new_plan,
-        user_id
-    )
+        sqlx::query(
+            "UPDATE users SET plan = ? WHERE id = ?"
+        )
+            .bind(new_plan)
+            .bind(user_id)
             .execute(self.pool)
             .await?;
 
         Ok(())
     }
-
-
 
 }
