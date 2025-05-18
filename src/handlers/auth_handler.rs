@@ -42,7 +42,7 @@ pub async fn login(
             // ⚠️ Don't use .set_secure(true) on localhost HTTP
             // auth_cookie.set_secure(true);
 
-            (jar.add(auth_cookie), Redirect::to("/dashboard"))
+            (jar.add(auth_cookie), Redirect::to("/"))
         }
         Err(err) => {
             tracing::warn!("❌ Login failed: {:?}", err);
@@ -73,7 +73,7 @@ pub async fn register(
             auth_cookie.set_http_only(true);
             // auth_cookie.set_secure(true); // samo na HTTPS
 
-            (jar.add(auth_cookie), Redirect::to("/dashboard")).into_response()
+            (jar.add(auth_cookie), Redirect::to("/")).into_response()
         }
         Err(err) => {
             tracing::warn!("❌ Registration failed: {:?}", err);

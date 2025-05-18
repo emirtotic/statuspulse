@@ -12,10 +12,10 @@
 <body class="bg-white text-neutral-900 flex flex-col min-h-screen">
 
 <!-- Navbar -->
-<header class="w-full fixed top-0 z-50 bg-gray-900 shadow-md">
+<header class="w-full fixed top-0 z-50 bg-gray-200 shadow-md">
     <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         <a href="/" class="flex items-center space-x-2">
-            <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-14 w-auto">
+            <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-20 w-48 object-contain">
         </a>
         <div class="hidden sm:flex items-center space-x-3">
             {% if current_user is defined %}
@@ -35,7 +35,7 @@
 <div class="h-20"></div>
 
 <!-- Hero Section -->
-<section class="py-24 bg-gray-50 text-center">
+<section class="py-24 bg-gray-100 text-center">
     <div class="max-w-7xl mx-auto px-4">
         <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight">Monitor Your APIs with Confidence</h1>
         <p class="mt-4 text-lg text-gray-600">StatusPulse gives you instant alerts and insights when your APIs fail — before your users notice.</p>
@@ -51,19 +51,19 @@
 </section>
 
 <!-- Features Section -->
-<section id="features" class="py-20 bg-white">
+<section id="features" class="py-20 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 text-center">
         <h2 class="text-3xl font-extrabold tracking-tight">Why StatusPulse?</h2>
         <div class="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-            <div class="p-6 bg-gray-50 rounded-2xl shadow-md hover:shadow-lg transition">
+            <div class="p-6 bg-gray-100 rounded-2xl shadow-md hover:shadow-lg transition">
                 <h3 class="text-xl font-semibold">Real-time Alerts</h3>
                 <p class="mt-2 text-gray-600">Get notified via email the moment your APIs start failing. No more discovering issues through angry customers — you’re always the first to know.</p>
             </div>
-            <div class="p-6 bg-gray-50 rounded-2xl shadow-md hover:shadow-lg transition">
+            <div class="p-6 bg-gray-100 rounded-2xl shadow-md hover:shadow-lg transition">
                 <h3 class="text-xl font-semibold">Easy Setup</h3>
                 <p class="mt-2 text-gray-600">No complex configs. Start monitoring within minutes with a clean dashboard.</p>
             </div>
-            <div class="p-6 bg-gray-50 rounded-2xl shadow-md hover:shadow-lg transition">
+            <div class="p-6 bg-gray-100 rounded-2xl shadow-md hover:shadow-lg transition">
                 <h3 class="text-xl font-semibold">Support my Hassle</h3>
                 <p class="mt-2 text-gray-600">I would appreciate if you support my work and register for free.</p>
             </div>
@@ -71,54 +71,98 @@
     </div>
 </section>
 
+<!-- About -->
+<section class="py-20 bg-gray-100 text-center">
+    <div class="max-w-5xl mx-auto px-6">
+        <h2 class="text-3xl sm:text-4xl font-extrabold mb-4">Never Let API Downtime Surprise You Again</h2>
+        <p class="mt-4 text-lg text-gray-600">
+            Get instant alerts, effortless setup, and a focused dashboard where you can track the health of your APIs and manage them with ease — all without distractions.
+            Whether you're running a single service, scaling a startup, or managing infrastructure for a growing company, StatusPulse helps you stay on top of API uptime with clarity and control.
+        </p>
+        <p class="mt-6 text-lg text-gray-700 leading-relaxed">
+            Built for modern teams & developers.
+            Gain full visibility into your APIs, receive timely alerts, and make confident decisions — all without enterprise complexity or inflated pricing.
+        </p>
+        <div class="mt-8">
+            {% if current_user is defined %}
+            <a href="/dashboard" class="inline-block px-6 py-3 bg-black text-white font-semibold rounded-xl shadow hover:bg-yellow-600 transition">
+                Go to Your APIs →
+            </a>
+            {% else %}
+            <a href="/register" class="inline-block px-6 py-3 bg-yellow-500 text-black font-semibold rounded-xl shadow hover:bg-yellow-600 transition">
+                Start Monitoring in Minutes →
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+
 <!-- Pricing Section -->
-<section id="pricing" class="py-20 bg-white">
+<section id="pricing" class="py-20 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 text-center">
         <h2 class="text-3xl font-extrabold tracking-tight">Flexible Pricing for All</h2>
         <p class="mt-4 text-lg text-gray-600">Simple and transparent pricing, no hidden fees.</p>
-        <div class="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+
+        <div class="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
             <!-- Free Plan -->
-            <div class="p-6 border-2 border-black rounded-2xl shadow-md hover:shadow-xl transition">
-                <h3 class="text-xl font-semibold">Free</h3>
-                <p class="mt-2 text-3xl font-bold">$0<span class="text-lg font-normal">/month</span></p>
-                <ul class="mt-4 space-y-2 text-gray-600">
-                    <li>✅ 2 Monitors</li>
-                    <li>✅ Email Alerts</li>
-                </ul>
-                {% if current_user is defined %}
-                <a href="/dashboard" class="mt-6 inline-block px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Go to Dashboard</a>
-                {% else %}
-                <a href="/register" class="mt-6 inline-block px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Get Free Plan</a>
-                {% endif %}
+            <div class="flex flex-col justify-between p-6 border-2 border-black rounded-2xl shadow-md hover:shadow-xl transition">
+                <div>
+                    <h3 class="text-xl font-semibold">Free</h3>
+                    <p class="mt-2 text-3xl font-bold">$0<span class="text-lg font-normal">/month</span></p>
+                    <ul class="mt-4 space-y-2 text-gray-600">
+                        <li>✅ 2 Monitors</li>
+                        <li>✅ Email Alerts</li>
+                    </ul>
+                </div>
+                <div class="mt-6">
+                    {% if current_user is defined %}
+                    <a href="/dashboard" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
+                        Go to Dashboard
+                    </a>
+                    {% else %}
+                    <a href="/register" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
+                        Get Free Plan
+                    </a>
+                    {% endif %}
+                </div>
             </div>
 
             <!-- Pro Plan -->
-            <div class="p-6 border-2 border-black rounded-2xl shadow-md hover:shadow-xl transition">
-                <h3 class="text-xl font-semibold">Pro</h3>
-                <p class="mt-2 text-3xl font-bold">$5<span class="text-lg font-normal">/month</span></p>
-                <ul class="mt-4 space-y-2 text-gray-600">
-                    <li>✅ 15 Monitors</li>
-                    <li>✅ Email Alerts</li>
-                    <li>✅ Support</li>
-                </ul>
-                <a href="/checkout/pro" class="mt-6 inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
-                    Choose Pro
-                </a>
+            <div class="flex flex-col justify-between p-6 border-2 border-black rounded-2xl shadow-md hover:shadow-xl transition">
+                <div>
+                    <h3 class="text-xl font-semibold">Pro</h3>
+                    <p class="mt-2 text-3xl font-bold">$5<span class="text-lg font-normal">/month</span></p>
+                    <ul class="mt-4 space-y-2 text-gray-600">
+                        <li>✅ 15 Monitors</li>
+                        <li>✅ Email Alerts</li>
+                        <li>✅ Support</li>
+                    </ul>
+                </div>
+                <div class="mt-6">
+                    <a href="/checkout/pro" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
+                        Choose Pro
+                    </a>
+                </div>
             </div>
 
             <!-- Enterprise Plan -->
-            <div class="p-6 border-2 border-black rounded-2xl shadow-md hover:shadow-xl transition">
-                <h3 class="text-xl font-semibold">Enterprise</h3>
-                <p class="mt-2 text-3xl font-bold">$20<span class="text-lg font-normal">/month</span></p>
-                <ul class="mt-4 space-y-2 text-gray-600">
-                    <li>✅ Unlimited Monitors</li>
-                    <li>✅ Email Alerts</li>
-                    <li>✅ Advanced Reports</li>
-                    <li>✅ Support</li>
-                </ul>
-                <a href="/checkout/enterprise" class="mt-6 inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
-                    Choose Enterprise
-                </a>
+            <div class="flex flex-col justify-between p-6 border-2 border-black rounded-2xl shadow-md hover:shadow-xl transition">
+                <div>
+                    <h3 class="text-xl font-semibold">Enterprise</h3>
+                    <p class="mt-2 text-3xl font-bold">$20<span class="text-lg font-normal">/month</span></p>
+                    <ul class="mt-4 space-y-2 text-gray-600">
+                        <li>✅ Unlimited Monitors</li>
+                        <li>✅ Email Alerts</li>
+                        <li>✅ Advanced Reports</li>
+                        <li>✅ Support</li>
+                    </ul>
+                </div>
+                <div class="mt-6">
+                    <a href="/checkout/enterprise" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
+                        Choose Enterprise
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -141,7 +185,7 @@
 </section>
 
 <!-- Footer -->
-<footer class="w-full bg-neutral-100 border-t border-neutral-200 py-6 text-center text-sm text-neutral-500 mt-auto">
+<footer class="w-full bg-gray-200 border-t border-neutral-200 py-6 text-center text-sm text-neutral-500 mt-auto">
     <div class="flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto px-6">
         <p>StatusPulse &copy; {{ now() | date(format="%Y") }}</p>
         <p>
