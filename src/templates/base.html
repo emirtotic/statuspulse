@@ -20,14 +20,24 @@
 
 <!-- Navbar -->
 <header class="w-full fixed top-0 z-50 bg-gray-200 shadow-md">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <!-- Logo -->
         <a href="/" class="flex items-center space-x-2">
             <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-20 w-48 object-contain">
         </a>
 
+        <!-- Hamburger -->
+        <button id="menu-btn" class="sm:hidden text-black focus:outline-none">
+            <svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+        </button>
+
+        <!-- Desktop Menu -->
         <nav class="hidden sm:flex items-center space-x-3">
             {% if current_user is defined %}
-            <a href="/" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Home</a>
+            <a href="/dashboard" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Dashboard</a>
             <a href="/#features" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
             <a href="/logout" class="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition">Logout</a>
             {% else %}
@@ -37,12 +47,27 @@
             {% endif %}
         </nav>
     </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="sm:hidden hidden px-6 pb-4">
+        <div class="flex flex-col space-y-2 text-center">
+            {% if current_user is defined %}
+            <a href="/dashboard" class="block px-4 py-2 bg-black text-white rounded-xl hover:bg-yellow-600 transition">Dashboard</a>
+            <a href="/#features" class="block px-4 py-2 bg-black text-white rounded-xl hover:bg-yellow-600 transition">About</a>
+            <a href="/logout" class="block px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition">Logout</a>
+            {% else %}
+            <a href="/login" class="block px-4 py-2 bg-yellow-500 text-black rounded-xl hover:bg-yellow-600 transition">Login</a>
+            <a href="/#features" class="block px-4 py-2 bg-black text-white rounded-xl hover:bg-yellow-600 transition">About</a>
+            <a href="/register" class="block px-4 py-2 border border-black text-black rounded-xl hover:bg-neutral-100 transition">Get Started</a>
+            {% endif %}
+        </div>
+    </div>
 </header>
 
-<!-- Spacer to prevent content being hidden behind fixed header -->
+<!-- Spacer -->
 <div class="h-20"></div>
 
-<!-- Main Content Block -->
+<!-- Main -->
 <main class="flex-grow w-full px-4 sm:px-6 py-10">
     {% block content %}{% endblock content %}
 </main>
@@ -59,6 +84,16 @@
         </p>
     </div>
 </footer>
+
+<!-- Toggle Script -->
+<script>
+    const btn = document.getElementById('menu-btn');
+    const menu = document.getElementById('mobile-menu');
+
+    btn.addEventListener('click', () => {
+        menu.classList.toggle('hidden');
+    });
+</script>
 
 </body>
 </html>
