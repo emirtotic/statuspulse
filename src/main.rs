@@ -13,6 +13,7 @@ use tracing_subscriber::{fmt, EnvFilter};
 use services::worker;
 use tera::Tera;
 use tower_http::services::ServeDir;
+use crate::handlers::axum_handler::error_page;
 
 static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
 
@@ -77,6 +78,7 @@ async fn main() -> Result<(), sqlx::Error> {
         .nest("/webhook", routes::lemon_routes::lemon_routes().with_state(state.clone()))
         .nest("/", routes::frontend_auth_routes().with_state(state.clone()))
         .route("/health", get(health_check))
+        .fallback(error_page)
         .layer(Extension(tera))
         .with_state(state);
 

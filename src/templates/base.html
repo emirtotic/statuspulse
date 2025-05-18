@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>{% block title %}StatusPulse{% endblock title %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
@@ -10,7 +11,8 @@
             scroll-behavior: smooth;
             scroll-padding-top: 92px;
         }
-        body { font-family: 'Inter', sans-serif;
+        body {
+            font-family: 'Inter', sans-serif;
         }
     </style>
 </head>
@@ -18,35 +20,35 @@
 
 <!-- Navbar -->
 <header class="w-full fixed top-0 z-50 bg-white shadow-md">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <a href="/" class="flex items-center space-x-2">
-            <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-14 w-auto">
+            <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-12 w-auto" />
         </a>
 
-        <div class="hidden sm:flex items-center space-x-3">
+        <nav class="hidden sm:flex items-center space-x-3">
             {% if current_user is defined %}
-            <!-- Logged-in navbar -->
             <a href="/" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Home</a>
             <a href="/#features" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
             <a href="/logout" class="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition">Logout</a>
             {% else %}
-            <!-- Guest navbar -->
             <a href="/login" class="px-4 py-2 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">Login</a>
             <a href="/#features" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
             <a href="/register" class="px-4 py-2 text-sm font-medium border border-black text-black rounded-xl hover:bg-neutral-100 transition">Get Started</a>
             {% endif %}
-        </div>
+        </nav>
     </div>
 </header>
 
-<!-- Spacer to push content below fixed navbar -->
+<!-- Spacer to prevent content being hidden behind fixed header -->
 <div class="h-20"></div>
 
-<main class="flex-grow w-full px-6 py-10">
+<!-- Main Content Block -->
+<main class="flex-grow w-full px-4 sm:px-6 py-10">
     {% block content %}{% endblock content %}
 </main>
 
-<footer class="w-full bg-neutral-100 border-t border-neutral-200 py-6 text-center text-sm text-neutral-500">
+<!-- Footer -->
+<footer class="w-full bg-neutral-100 border-t border-neutral-200 py-6 text-center text-sm text-neutral-500 mt-auto">
     <div class="flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto px-6">
         <p>StatusPulse &copy; {{ now() | date(format="%Y") }}</p>
         <p>

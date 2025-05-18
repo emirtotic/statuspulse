@@ -14,7 +14,7 @@ use crate::db::user_repository::UserRepository;
 use crate::models::monitor::{EditMonitorForm, MonitorStatusSummary};
 use crate::utils::jwt_auth;
 use axum::response::Response;
-use http::{header, HeaderValue};
+use http::{header, HeaderValue, StatusCode};
 
 #[derive(Deserialize)]
 pub struct CreateMonitorForm {
@@ -34,15 +34,21 @@ pub async fn landing_page(
 
     if let Some(cookie) = jar.get("auth_token") {
         let token = cookie.value();
-        if let Ok(user_id) = jwt_auth::decode_token(token, &state.jwt_secret) {
-            ctx.insert("current_user", &user_id);
+        match jwt_auth::decode_token(token, &state.jwt_secret) {
+            Ok(user_id) => {
+                ctx.insert("current_user", &user_id);
+            }
+            Err(_) => {
+                ctx.remove("current_user");
+            }
         }
+    } else {
+        ctx.remove("current_user");
     }
 
     let rendered = tera.render("index.html", &ctx).unwrap();
     Html(rendered)
 }
-
 
 #[axum::debug_handler]
 pub async fn form_login(
@@ -143,17 +149,17 @@ pub async fn dashboard(
     html_no_cache(Html(rendered))
 }
 
-
 #[axum::debug_handler]
-pub async fn logout(
-    jar: CookieJar,
-) -> impl IntoResponse {
-    // Remove auth_token cookie
+pub async fn logout(jar: CookieJar) -> impl IntoResponse {
     let mut auth_cookie = Cookie::named("auth_token");
     auth_cookie.set_path("/");
-    auth_cookie.make_removal();
+    auth_cookie.set_http_only(true);
+    auth_cookie.make_removal(); // sets max_age = 0, expires = past
 
-    // Flash logout message
+    // DODATNO: osiguraj da expire bude u prošlosti ručno
+    use time::OffsetDateTime;
+    auth_cookie.set_expires(OffsetDateTime::UNIX_EPOCH);
+
     let mut flash_cookie = Cookie::new("flash", "You have been logged out.");
     flash_cookie.set_path("/login");
     flash_cookie.set_max_age(time::Duration::seconds(5));
@@ -412,8 +418,22 @@ pub async fn edit_monitor_form(
 pub async fn error_page(
     Extension(tera): Extension<Tera>,
 ) -> impl IntoResponse {
-    let rendered = tera.render("error.html", &tera::Context::new()).unwrap();
-    Html(rendered)
+    let rendered = tera.render("error.html", &tera::Context::new()).unwrap_or_else(|_| {
+        "<h1>Error</h1><p>Something went wrong.</p>".to_string()
+    });
+
+    (StatusCode::NOT_FOUND, Html(rendered))
+}
+
+#[axum::debug_handler]
+pub async fn internal_error_page(
+    Extension(tera): Extension<Tera>,
+) -> impl IntoResponse {
+    let rendered = tera.render("error_500.html", &tera::Context::new()).unwrap_or_else(|_| {
+        "<h1>500 Internal Server Error</h1><p>We're sorry!</p>".to_string()
+    });
+
+    (StatusCode::INTERNAL_SERVER_ERROR, Html(rendered))
 }
 
 fn html_no_cache(body: Html<String>) -> Response {
