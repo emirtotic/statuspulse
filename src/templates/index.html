@@ -234,7 +234,8 @@
         </p>
 
         {% if flash %}
-        <div class="mt-6 bg-green-100 text-green-800 px-4 py-2 rounded-lg text-center">
+        <div data-flash
+             class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-xl shadow-lg z-50 opacity-100 transition-opacity duration-500">
             {{ flash }}
         </div>
         {% endif %}
@@ -280,7 +281,22 @@
     </div>
 </section>
 
+<!-- reCAPTCHA script -->
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+<!-- Flash auto-dismiss logic -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const flash = document.querySelector('[data-flash]');
+        if (flash) {
+            setTimeout(() => {
+                flash.classList.add('opacity-0');
+                setTimeout(() => flash.remove(), 500);
+            }, 5000);
+        }
+    });
+</script>
+
 
 <!-- Footer -->
 <footer class="w-full bg-gray-900 border-t border-neutral-200 py-6 text-center text-sm text-gray-50 mt-auto">

@@ -39,21 +39,20 @@ pub async fn landing_page(
     jar: CookieJar,
 ) -> Html<String> {
     let contact_email = std::env::var("CONTACT_EMAIL").unwrap_or("contact@example.com".into());
-    let recaptcha_site_key = std::env::var("RECAPTCHA_SITE_KEY").unwrap_or_default();
-
     let mut ctx = tera::Context::new();
     ctx.insert("contact_email", &contact_email);
-    ctx.insert("RECAPTCHA_SITE_KEY", &recaptcha_site_key);
+    ctx.insert("RECAPTCHA_SITE_KEY", &std::env::var("RECAPTCHA_SITE_KEY").unwrap_or_default());
+
+    if let Some(cookie) = jar.get("flash") {
+        ctx.insert("flash", cookie.value());
+    }
 
     let user_repo = UserRepository::new(&state.db);
-
     if let Some(cookie) = jar.get("auth_token") {
         let token = cookie.value();
         match jwt_auth::decode_token(token, &state.jwt_secret) {
             Ok(user_id) => {
                 ctx.insert("current_user", &user_id);
-
-                // Dohvati user-a iz baze
                 match user_repo.get_user_by_id(user_id).await {
                     Ok(Some(user)) => {
                         ctx.insert("user_plan", &user.plan);
@@ -62,22 +61,15 @@ pub async fn landing_page(
                     }
                     _ => {
                         ctx.insert("user_plan", "free");
-                        ctx.insert("user_name", "");
-                        ctx.insert("user_email", "");
                     }
                 }
             }
             Err(_) => {
-                ctx.remove("current_user");
                 ctx.insert("user_plan", "guest");
-                ctx.insert("user_name", "");
-                ctx.insert("user_email", "");
             }
         }
     } else {
         ctx.insert("user_plan", "guest");
-        ctx.insert("user_name", "");
-        ctx.insert("user_email", "");
     }
 
     let rendered = tera.render("index.html", &ctx).unwrap_or_else(|e| {
@@ -529,6 +521,30 @@ pub async fn submit_contact_form(
         return StatusCode::OK.into_response();
     }
 
+    let message = form.message.trim().to_lowercase();
+
+    let spam_keywords: Vec<String> = std::env::var("SPAM_KEYWORDS")
+        .unwrap_or_default()
+        .split(',')
+        .map(|s| s.trim().to_lowercase())
+        .collect();
+
+    let message_lower = form.message.to_lowercase();
+    let contains_spam_word = spam_keywords.iter().any(|kw| message_lower.contains(kw));
+
+    let link_count = message.matches("http").count();
+    let suspicious_email = regex::Regex::new(r"(?i)[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}").unwrap()
+        .is_match(&message);
+
+    if message.len() < 10 || contains_spam_word || link_count > 0 || suspicious_email {
+        tracing::warn!("🚫 Blocked suspicious contact message from {}: {:?}", form.email, form.message);
+
+        let mut flash_cookie = Cookie::new("flash", "Your message looks suspicious and was blocked.");
+        flash_cookie.set_path("/");
+        flash_cookie.set_max_age(time::Duration::seconds(5));
+        return (jar.add(flash_cookie), Redirect::to("/#contact")).into_response();
+    }
+
     let client = reqwest::Client::new();
     let secret = std::env::var("RECAPTCHA_SECRET_KEY").unwrap_or_default();
 
@@ -554,7 +570,7 @@ pub async fn submit_contact_form(
         let mut flash_cookie = Cookie::new("flash", "reCAPTCHA verification failed.");
         flash_cookie.set_path("/");
         flash_cookie.set_max_age(time::Duration::seconds(5));
-        return (jar.add(flash_cookie), Redirect::to("/")).into_response();
+        return (jar.add(flash_cookie), Redirect::to("/#contact")).into_response();
     };
 
     let success = json.get("success").and_then(|v| v.as_bool()).unwrap_or(false);
@@ -583,7 +599,6 @@ pub async fn submit_contact_form(
 
     if let Err(e) = send_result {
         tracing::error!("❌ Failed to send contact email: {:?}", e);
-
         let mut flash_cookie = Cookie::new("flash", "There was a problem sending your message.");
         flash_cookie.set_path("/");
         flash_cookie.set_max_age(time::Duration::seconds(5));
