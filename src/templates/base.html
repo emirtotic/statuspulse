@@ -21,15 +21,15 @@
 
 <!-- Navbar -->
 <header class="w-full fixed top-0 z-50 bg-gray-200 shadow-md">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+    <div class="max-w-7xl mx-auto px-4 py-1 flex justify-between items-center">
         <!-- Logo -->
         <a href="/" class="flex items-center space-x-2">
-            <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-20 w-48 object-contain">
+            <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-14 w-auto object-contain">
         </a>
 
         <!-- Hamburger -->
         <button id="menu-btn" class="sm:hidden text-black focus:outline-none">
-            <svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round"
                       d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
@@ -38,25 +38,23 @@
         <!-- Desktop Menu -->
         <nav class="hidden sm:flex items-center space-x-3">
             {% if current_user is defined %}
-
             {% if on_dashboard %}
-            <a href="/" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Home</a>
+            <a href="/" class="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Home</a>
             {% else %}
-            <a href="/dashboard" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Dashboard</a>
+            <a href="/dashboard" class="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Dashboard</a>
             {% endif %}
-
-            <a href="/#features" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
-            <a href="/logout" class="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition">Logout</a>
+            <a href="/#features" class="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
+            <a href="/logout" class="px-3 py-1.5 text-sm font-medium bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition">Logout</a>
             {% else %}
-            <a href="/login" class="px-4 py-2 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">Login</a>
-            <a href="/#features" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
-            <a href="/register" class="px-4 py-2 text-sm font-medium border border-black text-black rounded-xl hover:bg-neutral-100 transition">Get Started</a>
+            <a href="/login" class="px-3 py-1.5 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">Login</a>
+            <a href="/#features" class="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
+            <a href="/register" class="px-3 py-1.5 text-sm font-medium border border-black text-black rounded-xl hover:bg-neutral-100 transition">Get Started</a>
             {% endif %}
         </nav>
     </div>
 
     <!-- Mobile Menu -->
-    <div id="mobile-menu" class="sm:hidden hidden px-6 pb-4">
+    <div id="mobile-menu" class="sm:hidden hidden px-4 pb-2">
         <div class="flex flex-col space-y-2 text-center">
             {% if current_user is defined %}
             <a href="/dashboard" class="block px-4 py-2 bg-black text-white rounded-xl hover:bg-yellow-600 transition">Dashboard</a>
@@ -71,6 +69,7 @@
     </div>
 </header>
 
+
 <!-- Spacer -->
 <div class="h-20"></div>
 
@@ -84,7 +83,7 @@
     <div class="flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto px-6">
         <p>StatusPulse &copy; {{ now() | date(format="%Y") }}</p>
         <p>
-            Reliable API Monitoring by
+            Reliable API Monitoring, built and maintained by
             <a href="https://emirtotic.github.io/portfolio-site/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
                 Emir Totić
             </a>

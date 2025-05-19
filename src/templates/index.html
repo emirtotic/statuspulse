@@ -14,9 +14,9 @@
 
 <!-- Navbar -->
 <header class="w-full fixed top-0 z-50 bg-gray-200 shadow-md">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+    <div class="max-w-7xl mx-auto px-4 py-1 flex justify-between items-center">
         <a href="/" class="flex items-center space-x-2">
-            <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-20 w-48 object-contain">
+            <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-14 w-auto object-contain">
         </a>
         <div class="hidden sm:flex items-center space-x-3">
             {% if current_user is defined %}
@@ -33,13 +33,13 @@
 </header>
 
 <!-- Spacer to push content below fixed navbar -->
-<div class="h-20"></div>
+<div class="h-10"></div>
 
 <!-- Hero Section -->
 <section class="py-24 bg-gray-100 text-center">
     <div class="max-w-7xl mx-auto px-4">
         <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight">Monitor Your APIs with Confidence</h1>
-        <p class="mt-4 text-lg text-gray-600">StatusPulse gives you instant alerts and insights when your APIs fail — before your users notice.</p>
+        <p class="mt-4 text-lg text-gray-600">Get notified the moment something breaks — StatusPulse alerts you instantly when your APIs fail, so you can act before users notice.</p>
         <div class="mt-8 flex justify-center gap-4">
             {% if current_user is defined %}
             <a href="/dashboard" class="px-6 py-3 bg-black text-white text-lg font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Go to Dashboard</a>
@@ -65,8 +65,8 @@
                 <p class="mt-2 text-gray-600">No complex configs. Start monitoring within minutes with a clean dashboard.</p>
             </div>
             <div class="p-6 bg-gray-100 rounded-2xl shadow-md hover:shadow-lg transition">
-                <h3 class="text-xl font-semibold">Support my Hassle</h3>
-                <p class="mt-2 text-gray-600">I would appreciate if you support my work and register for free.</p>
+                <h3 class="text-xl font-semibold">Support Independent Development</h3>
+                <p class="mt-2 text-gray-600">StatusPulse is an indie product — registering for free helps support ongoing development and improvements.</p>
             </div>
         </div>
     </div>
@@ -77,8 +77,8 @@
     <div class="max-w-5xl mx-auto px-6">
         <h2 class="text-3xl sm:text-4xl font-extrabold mb-4">Never Let API Downtime Surprise You Again</h2>
         <p class="mt-4 text-lg text-gray-600">
-            Get instant alerts, effortless setup, and a focused dashboard where you can track the health of your APIs and manage them with ease — all without distractions.
-            Whether you're running a single service, scaling a startup, or managing infrastructure for a growing company, StatusPulse helps you stay on top of API uptime with clarity and control.
+            Get instant alerts, effortless setup, and a clean dashboard to track the health of your APIs.
+            Whether you're monitoring one service or managing infrastructure at scale, StatusPulse gives you clarity and control — without enterprise complexity or inflated pricing.
         </p>
         <p class="mt-6 text-lg text-gray-700 leading-relaxed">
             Built for modern teams & developers.
@@ -226,7 +226,7 @@
     <div class="flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto px-6">
         <p>StatusPulse &copy; {{ now() | date(format="%Y") }}</p>
         <p>
-            Reliable API Monitoring by
+            Reliable API Monitoring, built and maintained by
             <a href="https://emirtotic.github.io/portfolio-site/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
                 Emir Totić
             </a>
