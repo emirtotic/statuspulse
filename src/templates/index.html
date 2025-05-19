@@ -24,9 +24,9 @@
             <a href="/#features" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
             <a href="/logout" class="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition">Logout</a>
             {% else %}
+            <a href="/#features" class="px-4 py-2 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">About</a>
             <a href="/login" class="px-4 py-2 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">Login</a>
-            <a href="/#features" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
-            <a href="/register" class="px-4 py-2 text-sm font-medium border border-black text-black rounded-xl hover:bg-neutral-100 transition">Get Started</a>
+            <a href="/register" class="px-4 py-2 text-sm font-medium border bg-neutral-100 border-black text-black rounded-xl hover:bg-yellow-500 transition">Register</a>
             {% endif %}
         </div>
     </div>
@@ -45,7 +45,7 @@
             <a href="/dashboard" class="px-6 py-3 bg-black text-white text-lg font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Go to Dashboard</a>
             {% else %}
             <a href="/register" class="px-6 py-3 bg-black text-white text-lg font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Get Started</a>
-            <a href="#features" class="px-6 py-3 border border-gray-300 text-lg font-medium rounded-xl hover:bg-yellow-600 transition">Learn More</a>
+            <a href="#features" class="px-6 py-3 bg-yellow-500 border-gray-300 text-lg font-medium rounded-xl hover:bg-yellow-600 transition">Learn More</a>
             {% endif %}
         </div>
     </div>
@@ -114,6 +114,8 @@
                     <ul class="mt-4 space-y-2 text-gray-600">
                         <li>✅ 2 Monitors</li>
                         <li>✅ Email Alerts</li>
+                        <li>✅ Minimum check interval: <strong>15 minutes</strong></li>
+                        <li>❌ No log history</li>
                     </ul>
                 </div>
                 <div class="mt-6">
@@ -137,6 +139,8 @@
                     <ul class="mt-4 space-y-2 text-gray-600">
                         <li>✅ 15 Monitors</li>
                         <li>✅ Email Alerts</li>
+                        <li>✅ Minimum check interval: <strong>5 minutes</strong></li>
+                        <li>✅ Basic log history (7 days)</li>
                         <li>✅ Support</li>
                     </ul>
                 </div>
@@ -155,8 +159,10 @@
                     <ul class="mt-4 space-y-2 text-gray-600">
                         <li>✅ Unlimited Monitors</li>
                         <li>✅ Email Alerts</li>
-                        <li>✅ Advanced Reports</li>
-                        <li>✅ Support</li>
+                        <li>✅ Minimum check interval: <strong>1 minute</strong></li>
+                        <li>✅ Full log history (30+ days)</li>
+                        <li>✅ SLA reports / Uptime reports (PDF/CSV)</li>
+                        <li>✅ Priority Support</li>
                     </ul>
                 </div>
                 <div class="mt-6">

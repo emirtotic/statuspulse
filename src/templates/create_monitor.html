@@ -7,6 +7,7 @@
     <div class="w-full max-w-xl bg-white p-8 rounded-xl shadow-lg">
         <h2 class="text-2xl font-semibold text-center text-gray-800 mb-6">Add New Monitor</h2>
 
+        {# --- Monitor limit alerts --- #}
         {% if user_plan and monitor_count is defined %}
         {% if user_plan == "free" and monitor_count >= 2 %}
         <div class="bg-yellow-100 text-yellow-800 px-4 py-3 rounded-xl text-center mb-6 font-medium border border-yellow-300">
@@ -21,7 +22,7 @@
         {% endif %}
         {% endif %}
 
-
+        {# --- Flash error --- #}
         {% if flash %}
         <div class="bg-red-100 text-red-700 px-4 py-2 rounded-lg text-center mb-4">
             {{ flash }}
@@ -36,7 +37,7 @@
         {% endif %}
         {% endif %}
 
-
+        {# --- Monitor form --- #}
         <form method="post" action="/monitors/new" class="space-y-5">
             <div>
                 <label class="block text-sm font-medium text-gray-600 mb-1">Label</label>
@@ -50,7 +51,18 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-600 mb-1">Interval (minutes)</label>
-                <input type="number" name="interval_mins" min="1" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                <input
+                        type="number"
+                        name="interval_mins"
+                        min="{{ min_interval_mins }}"
+                        required
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                {% if user_plan != "enterprise" %}
+                <p class="text-sm text-gray-500 mt-1">
+                    Minimum interval for your <strong>{{ user_plan | capitalize }}</strong> plan is <strong>{{ min_interval_mins }} minutes</strong>.
+                </p>
+                {% endif %}
             </div>
 
             <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Create Monitor</button>

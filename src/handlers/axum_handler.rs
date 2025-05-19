@@ -152,16 +152,17 @@ pub async fn logout(jar: CookieJar) -> impl IntoResponse {
     (jar.add(auth_cookie).add(flash_cookie), Redirect::to("/"))
 }
 
+// Create on UI
 #[axum::debug_handler]
 pub async fn form_create_monitor(
     State(state): State<AppState>,
     Extension(tera): Extension<Tera>,
     jar: CookieJar,
 ) -> impl IntoResponse {
-    let token = if let Some(cookie) = jar.get("auth_token") {
-        cookie.value().to_string()
-    } else {
-        return Redirect::to("/login").into_response();
+
+    let token = match jar.get("auth_token") {
+        Some(cookie) => cookie.value().to_string(),
+        None => return Redirect::to("/login").into_response(),
     };
 
     let user_id = match jwt_auth::decode_token(&token, &state.jwt_secret) {
@@ -177,18 +178,35 @@ pub async fn form_create_monitor(
         _ => return Redirect::to("/login").into_response(),
     };
 
-    let monitor_count = match monitor_repo.count_user_monitors(user_id).await {
-        Ok(count) => count,
-        Err(_) => 0,
+    let monitor_count = monitor_repo
+        .count_user_monitors(user_id)
+        .await
+        .unwrap_or(0);
+
+    let min_interval_mins = match user.plan.as_str() {
+        "free" => 15,
+        "pro" => 5,
+        "enterprise" => 1,
+        _ => 15, // fallback
     };
 
     let mut ctx = tera::Context::new();
     ctx.insert("current_user", &user_id);
     ctx.insert("user_plan", &user.plan);
     ctx.insert("monitor_count", &monitor_count);
+    ctx.insert("min_interval_mins", &min_interval_mins);
 
-    let rendered = tera.render("create_monitor.html", &ctx).unwrap();
-    html_no_cache(Html(rendered))
+    match tera.render("create_monitor.html", &ctx) {
+        Ok(rendered) => html_no_cache(Html(rendered)),
+        Err(err) => {
+            tracing::error!("Template error: {:?}", err);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Template rendering failed".to_string(),
+            )
+                .into_response()
+        }
+    }
 }
 
 // Update on UI
@@ -199,10 +217,10 @@ pub async fn form_edit_monitor(
     Path(monitor_id): Path<u64>,
     jar: CookieJar,
 ) -> impl IntoResponse {
-    let token = if let Some(cookie) = jar.get("auth_token") {
-        cookie.value().to_string()
-    } else {
-        return Redirect::to("/login").into_response();
+
+    let token = match jar.get("auth_token") {
+        Some(cookie) => cookie.value().to_string(),
+        None => return Redirect::to("/login").into_response(),
     };
 
     let user_id = match jwt_auth::decode_token(&token, &state.jwt_secret) {
@@ -210,19 +228,45 @@ pub async fn form_edit_monitor(
         Err(_) => return Redirect::to("/login").into_response(),
     };
 
+    let user_repo = UserRepository::new(&state.db);
     let monitor_repo = MonitorRepository::new(&state.db);
+
     let monitor = match monitor_repo.get_monitor_by_id(monitor_id, user_id).await {
         Ok(Some(m)) => m,
         _ => return Redirect::to("/dashboard").into_response(),
     };
 
+    let user = match user_repo.get_user_by_id(user_id).await {
+        Ok(Some(u)) => u,
+        _ => return Redirect::to("/login").into_response(),
+    };
+
+    let min_interval_mins = match user.plan.as_str() {
+        "free" => 15,
+        "pro" => 5,
+        "enterprise" => 1,
+        _ => 15,
+    };
+
     let mut ctx = tera::Context::new();
     ctx.insert("monitor", &monitor);
     ctx.insert("current_user", &user_id);
+    ctx.insert("user_plan", &user.plan);
+    ctx.insert("min_interval_mins", &min_interval_mins);
 
-    let rendered = tera.render("edit_monitor.html", &ctx).unwrap();
-    html_no_cache(Html(rendered)) // <- ovo sprečava da se forma učita iz cache-a nakon logout-a
+    match tera.render("edit_monitor.html", &ctx) {
+        Ok(rendered) => html_no_cache(Html(rendered)),
+        Err(err) => {
+            tracing::error!("Template error: {:?}", err);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Template rendering failed".to_string(),
+            )
+                .into_response()
+        }
+    }
 }
+
 
 #[axum::debug_handler]
 pub async fn delete_monitor_form(

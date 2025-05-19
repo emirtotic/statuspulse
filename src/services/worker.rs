@@ -123,7 +123,7 @@ pub async fn start_worker(state: AppState) {
                                                         .send_alert(
                                                             &user.email,
                                                             &subject,
-                                                            "src/services/email_templates/monitor_down.html",
+                                                            "src/services/email_templates/email_monitor_down.html",
                                                             replacements,
                                                         ).await {
                                                         error!("Failed to send alert email: {:?}", e);

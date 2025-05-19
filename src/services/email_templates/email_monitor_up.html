@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>StatusPulse Alert</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #FF0000;
+            margin: 0;
+        }
+        .content {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 20px;
+            background-color: #1a73e8;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>StatusPulse Alert</h1>
+    </div>
+    <div class="content">
+        <p>Dear <strong>{{USER_NAME}}</strong>,</p>
+        <p>Good news! Your monitor:</p>
+        <p><strong>{{MONITOR_LABEL}}</strong></p>
+        <p>is now <span style="color: #28a745;"><strong>UP</strong></span> and successfully reachable at:</p>
+        <p><a href="{{MONITOR_URL}}" target="_blank">{{MONITOR_URL}}</a></p>
+
+        <a href="{{MONITOR_URL}}" class="button">View Monitor</a>
+    </div>
+    <div class="footer">
+        StatusPulse Service &bull; This is an automated message.
+    </div>
+</div>
+</body>
+</html>
