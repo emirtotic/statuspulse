@@ -7,6 +7,7 @@ use serde::{Serialize, Deserialize};
 use chrono::{Utc, Duration};
 use rand_core::OsRng;
 use thiserror::Error;
+use crate::services::sendgrid_service::SendGridService;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
@@ -31,35 +32,45 @@ pub enum AuthError {
 pub struct AuthService<'a> {
     repo: UserRepository<'a>,
     jwt_secret: &'a str,
+    pub sendgrid: SendGridService,
 }
 
 impl<'a> AuthService<'a> {
-    pub fn new(pool: &'a MySqlPool, jwt_secret: &'a str) -> Self {
+    pub fn new(pool: &'a MySqlPool, jwt_secret: &'a str, sendgrid: SendGridService) -> Self {
         Self {
             repo: UserRepository::new(pool),
             jwt_secret,
+            sendgrid,
         }
     }
 
     pub async fn register_user(&self, name: &str, email: &str, password: &str) -> Result<String, AuthError> {
-        // Check if user already exists
+
         if let Ok(Some(_)) = self.repo.get_by_email(email).await {
             return Err(AuthError::UserExists);
         }
 
-        // Hash password
         let salt = SaltString::generate(&mut OsRng);
         let password_hash = Argon2::default()
             .hash_password(password.as_bytes(), &salt)
             .map_err(|_| AuthError::HashingError)?
             .to_string();
 
-        // Insert into DB
         let user_id = self.repo.create_user(name, email, &password_hash, "free")
             .await
             .map_err(|_| AuthError::DatabaseError)?;
 
-        // Generate JWT
+        let email_result = self.sendgrid.send_alert(
+            email,
+            "Welcome to StatusPulse!",
+            "src/services/email_templates/email_registration.html",
+            &[("USER_NAME", name)],
+        ).await;
+
+        if let Err(e) = email_result {
+            tracing::warn!("Failed to send registration email to {}: {}", email, e);
+        }
+
         self.generate_token(user_id)
     }
 

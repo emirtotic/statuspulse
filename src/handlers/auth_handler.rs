@@ -2,9 +2,10 @@ use axum::{
     extract::{State, Form},
     response::{IntoResponse, Redirect},
 };
+use axum_extra::extract::cookie::{Cookie, CookieJar};
 use serde::{Deserialize, Serialize};
 use crate::{services::auth_service::AuthService, AppState};
-use axum_extra::extract::cookie::{Cookie, CookieJar};
+use crate::services::sendgrid_service::SendGridService;
 
 #[derive(Deserialize)]
 pub struct RegisterRequest {
@@ -30,22 +31,21 @@ pub async fn login(
     jar: CookieJar,
     Form(form): Form<LoginRequest>,
 ) -> impl IntoResponse {
-    let auth_service = AuthService::new(&state.db, &state.jwt_secret);
+    let dummy_sendgrid = SendGridService::new("".into(), "".into());
+    let auth_service = AuthService::new(&state.db, &state.jwt_secret, dummy_sendgrid);
 
     match auth_service.login_user(&form.email, &form.password).await {
         Ok(token) => {
-            tracing::info!("✅ Login successful, issuing auth_token cookie");
+            tracing::info!("✅ Login successful for {}", form.email);
 
             let mut auth_cookie = Cookie::new("auth_token", token);
             auth_cookie.set_path("/");
             auth_cookie.set_http_only(true);
-            // ⚠️ Don't use .set_secure(true) on localhost HTTP
-            // auth_cookie.set_secure(true);
 
             (jar.add(auth_cookie), Redirect::to("/"))
         }
         Err(err) => {
-            tracing::warn!("❌ Login failed: {:?}", err);
+            tracing::warn!("❌ Login failed for {}: {:?}", form.email, err);
 
             let mut flash_cookie = Cookie::new("flash", "Invalid credentials");
             flash_cookie.set_path("/login");
@@ -62,21 +62,25 @@ pub async fn register(
     jar: CookieJar,
     Form(form): Form<RegisterRequest>,
 ) -> impl IntoResponse {
-    let auth_service = AuthService::new(&state.db, &state.jwt_secret);
+    let sendgrid_service = SendGridService::new(
+        std::env::var("SENDGRID_API_KEY").expect("SENDGRID_API_KEY must be set").trim().to_string(),
+        std::env::var("SENDGRID_FROM_EMAIL").expect("SENDGRID_FROM_EMAIL must be set").trim().to_string(),
+    );
+
+    let auth_service = AuthService::new(&state.db, &state.jwt_secret, sendgrid_service);
 
     match auth_service.register_user(&form.name, &form.email, &form.password).await {
         Ok(token) => {
-            tracing::info!("✅ Registration successful");
+            tracing::info!("✅ Registration successful for {}", form.email);
 
             let mut auth_cookie = Cookie::new("auth_token", token);
             auth_cookie.set_path("/");
             auth_cookie.set_http_only(true);
-            // auth_cookie.set_secure(true); // samo na HTTPS
 
             (jar.add(auth_cookie), Redirect::to("/")).into_response()
         }
         Err(err) => {
-            tracing::warn!("❌ Registration failed: {:?}", err);
+            tracing::warn!("❌ Registration failed for {}: {:?}", form.email, err);
 
             let mut flash_cookie = Cookie::new("flash", "Registration failed.");
             flash_cookie.set_path("/register");
