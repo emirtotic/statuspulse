@@ -24,7 +24,7 @@ pub fn frontend_auth_routes() -> Router<AppState> {
         .route("/monitors/:id/delete", post(axum_handler::delete_monitor_form))
         .route("/checkout/:plan", get(checkout_handler::checkout_handler))
         .route("/error", get(axum_handler::error_page))
-
+        .route("/contact", post(axum_handler::submit_contact_form))
 
 }
 

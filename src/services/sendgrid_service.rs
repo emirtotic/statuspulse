@@ -83,4 +83,33 @@ impl SendGridService {
             }
         }
     }
+
+    pub async fn send_raw_html(
+        &self,
+        to: &str,
+        subject: &str,
+        html_body: &str,
+    ) -> Result<(), reqwest::Error> {
+        let payload = json!({
+        "personalizations": [{ "to": [{ "email": to }] }],
+        "from": { "email": self.from_email },
+        "subject": subject,
+        "content": [{ "type": "text/html", "value": html_body }]
+    });
+
+        let resp = self
+            .client
+            .post("https://api.sendgrid.com/v3/mail/send")
+            .bearer_auth(&self.api_key)
+            .json(&payload)
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            tracing::error!("SendGrid error: {:?}", resp.text().await.unwrap_or_default());
+        }
+
+        Ok(())
+    }
+
 }

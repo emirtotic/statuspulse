@@ -34,6 +34,11 @@
                 </div>
             </div>
 
+            <!-- reCAPTCHA -->
+            <div class="flex justify-center">
+                <div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_SITE_KEY }}"></div>
+            </div>
+
             <button type="submit" class="w-full bg-yellow-500 text-white py-2 rounded-lg hover:bg-yellow-800 transition">Sign in</button>
         </form>
 
@@ -64,4 +69,7 @@
                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
     });
 </script>
+
+<!-- reCAPTCHA script -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 {% endblock content %}

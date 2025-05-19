@@ -12,12 +12,23 @@ use axum::response::Response;
 use axum::{extract::State, response::Redirect};
 use http::{header, HeaderValue, StatusCode};
 use serde::Deserialize;
+use crate::services::sendgrid_service::SendGridService;
 
 #[derive(Deserialize)]
 pub struct CreateMonitorForm {
     pub label: String,
     pub url: String,
     pub interval_mins: i32,
+}
+
+#[derive(Deserialize)]
+pub struct ContactForm {
+    pub name: String,
+    pub email: String,
+    pub message: String,
+    pub website: Option<String>, // honeypot
+    #[serde(rename = "g-recaptcha-response")]
+    pub recaptcha_token: String,
 }
 
 // index (home) page
@@ -27,7 +38,13 @@ pub async fn landing_page(
     State(state): State<AppState>,
     jar: CookieJar,
 ) -> Html<String> {
+    let contact_email = std::env::var("CONTACT_EMAIL").unwrap_or("contact@example.com".into());
+    let recaptcha_site_key = std::env::var("RECAPTCHA_SITE_KEY").unwrap_or_default();
+
     let mut ctx = tera::Context::new();
+    ctx.insert("contact_email", &contact_email);
+    ctx.insert("RECAPTCHA_SITE_KEY", &recaptcha_site_key);
+
     let user_repo = UserRepository::new(&state.db);
 
     if let Some(cookie) = jar.get("auth_token") {
@@ -40,20 +57,27 @@ pub async fn landing_page(
                 match user_repo.get_user_by_id(user_id).await {
                     Ok(Some(user)) => {
                         ctx.insert("user_plan", &user.plan);
+                        ctx.insert("user_name", &user.name);
+                        ctx.insert("user_email", &user.email);
                     }
                     _ => {
-                        // Fallback plan ako nešto pođe po zlu
                         ctx.insert("user_plan", "free");
+                        ctx.insert("user_name", "");
+                        ctx.insert("user_email", "");
                     }
                 }
             }
             Err(_) => {
                 ctx.remove("current_user");
                 ctx.insert("user_plan", "guest");
+                ctx.insert("user_name", "");
+                ctx.insert("user_email", "");
             }
         }
     } else {
         ctx.insert("user_plan", "guest");
+        ctx.insert("user_name", "");
+        ctx.insert("user_email", "");
     }
 
     let rendered = tera.render("index.html", &ctx).unwrap_or_else(|e| {
@@ -67,6 +91,7 @@ pub async fn landing_page(
 #[axum::debug_handler]
 pub async fn form_login(Extension(tera): Extension<Tera>, jar: CookieJar) -> Html<String> {
     let mut ctx = tera::Context::new();
+    ctx.insert("RECAPTCHA_SITE_KEY", &std::env::var("RECAPTCHA_SITE_KEY").unwrap_or_default());
 
     if let Some(cookie) = jar.get("flash") {
         ctx.insert("flash", cookie.value());
@@ -79,7 +104,7 @@ pub async fn form_login(Extension(tera): Extension<Tera>, jar: CookieJar) -> Htm
 #[axum::debug_handler]
 pub async fn form_register(Extension(tera): Extension<Tera>, jar: CookieJar) -> Html<String> {
     let mut ctx = tera::Context::new();
-
+    ctx.insert("RECAPTCHA_SITE_KEY", &std::env::var("RECAPTCHA_SITE_KEY").unwrap_or_default());
     if let Some(cookie) = jar.get("flash") {
         ctx.insert("flash", cookie.value());
     }
@@ -484,6 +509,94 @@ pub async fn internal_error_page(Extension(tera): Extension<Tera>) -> impl IntoR
         .unwrap_or_else(|_| "<h1>500 Internal Server Error</h1><p>We're sorry!</p>".to_string());
 
     (StatusCode::INTERNAL_SERVER_ERROR, Html(rendered))
+}
+
+#[axum::debug_handler]
+pub async fn submit_contact_form(
+    State(_state): State<AppState>,
+    jar: CookieJar,
+    Form(form): Form<ContactForm>,
+) -> impl IntoResponse {
+    let sendgrid = SendGridService::new(
+        std::env::var("SENDGRID_API_KEY").unwrap_or_default(),
+        std::env::var("SENDGRID_FROM_EMAIL").unwrap_or_default(),
+    );
+
+    let contact_receiver = std::env::var("CONTACT_EMAIL").unwrap_or("contact@example.com".into());
+
+    if form.website.is_some() && !form.website.as_ref().unwrap().is_empty() {
+        tracing::warn!("🕷️ Honeypot caught a bot attempt!");
+        return StatusCode::OK.into_response();
+    }
+
+    let client = reqwest::Client::new();
+    let secret = std::env::var("RECAPTCHA_SECRET_KEY").unwrap_or_default();
+
+    let verify_res = client
+        .post("https://www.google.com/recaptcha/api/siteverify")
+        .form(&[
+            ("secret", secret.as_str()),
+            ("response", form.recaptcha_token.as_str()),
+        ])
+        .send()
+        .await;
+
+    let Ok(resp) = verify_res else {
+        tracing::warn!("❌ reCAPTCHA HTTP request failed");
+        let mut flash_cookie = Cookie::new("flash", "reCAPTCHA verification failed.");
+        flash_cookie.set_path("/");
+        flash_cookie.set_max_age(time::Duration::seconds(5));
+        return (jar.add(flash_cookie), Redirect::to("/")).into_response();
+    };
+
+    let Ok(json) = resp.json::<serde_json::Value>().await else {
+        tracing::warn!("❌ reCAPTCHA JSON decode failed");
+        let mut flash_cookie = Cookie::new("flash", "reCAPTCHA verification failed.");
+        flash_cookie.set_path("/");
+        flash_cookie.set_max_age(time::Duration::seconds(5));
+        return (jar.add(flash_cookie), Redirect::to("/")).into_response();
+    };
+
+    let success = json.get("success").and_then(|v| v.as_bool()).unwrap_or(false);
+    if !success {
+        tracing::warn!("❌ reCAPTCHA check failed: {:?}", json);
+        let mut flash_cookie = Cookie::new("flash", "reCAPTCHA verification failed.");
+        flash_cookie.set_path("/");
+        flash_cookie.set_max_age(time::Duration::seconds(5));
+        return (jar.add(flash_cookie), Redirect::to("/")).into_response();
+    }
+
+    let subject = format!("📬 New Contact Message from {}", form.name);
+    let body = format!(
+        "<h2>New Contact Submission</h2>\
+        <p><strong>Name:</strong> {}</p>\
+        <p><strong>Email:</strong> {}</p>\
+        <p><strong>Message:</strong><br>{}</p>",
+        form.name,
+        form.email,
+        form.message.replace("\n", "<br>")
+    );
+
+    let send_result = sendgrid
+        .send_raw_html(&contact_receiver, &subject, &body)
+        .await;
+
+    if let Err(e) = send_result {
+        tracing::error!("❌ Failed to send contact email: {:?}", e);
+
+        let mut flash_cookie = Cookie::new("flash", "There was a problem sending your message.");
+        flash_cookie.set_path("/");
+        flash_cookie.set_max_age(time::Duration::seconds(5));
+        return (jar.add(flash_cookie), Redirect::to("/")).into_response();
+    }
+
+    tracing::info!("✅ Contact message sent to {}", contact_receiver);
+
+    let mut flash_cookie = Cookie::new("flash", "Thanks for reaching out! We'll get back to you soon.");
+    flash_cookie.set_path("/");
+    flash_cookie.set_max_age(time::Duration::seconds(5));
+
+    (jar.add(flash_cookie), Redirect::to("/")).into_response()
 }
 
 fn html_no_cache(body: Html<String>) -> Response {
