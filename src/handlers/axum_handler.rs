@@ -28,22 +28,39 @@ pub async fn landing_page(
     jar: CookieJar,
 ) -> Html<String> {
     let mut ctx = tera::Context::new();
+    let user_repo = UserRepository::new(&state.db);
 
     if let Some(cookie) = jar.get("auth_token") {
         let token = cookie.value();
         match jwt_auth::decode_token(token, &state.jwt_secret) {
             Ok(user_id) => {
                 ctx.insert("current_user", &user_id);
+
+                // Dohvati user-a iz baze
+                match user_repo.get_user_by_id(user_id).await {
+                    Ok(Some(user)) => {
+                        ctx.insert("user_plan", &user.plan);
+                    }
+                    _ => {
+                        // Fallback plan ako nešto pođe po zlu
+                        ctx.insert("user_plan", "free");
+                    }
+                }
             }
             Err(_) => {
                 ctx.remove("current_user");
+                ctx.insert("user_plan", "guest");
             }
         }
     } else {
-        ctx.remove("current_user");
+        ctx.insert("user_plan", "guest");
     }
 
-    let rendered = tera.render("index.html", &ctx).unwrap();
+    let rendered = tera.render("index.html", &ctx).unwrap_or_else(|e| {
+        tracing::error!("Template rendering failed: {:?}", e);
+        "Internal Server Error".to_string()
+    });
+
     Html(rendered)
 }
 

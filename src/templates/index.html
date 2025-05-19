@@ -119,7 +119,11 @@
                     </ul>
                 </div>
                 <div class="mt-6">
-                    {% if current_user is defined %}
+                    {% if user_plan == "pro" or user_plan == "enterprise" %}
+                    <span class="inline-block w-full text-center px-6 py-3 bg-gray-200 text-gray-600 font-medium rounded-xl shadow">
+                    Included in your plan
+                </span>
+                    {% elif user_plan == "free" %}
                     <a href="/dashboard" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
                         Go to Dashboard
                     </a>
@@ -145,9 +149,19 @@
                     </ul>
                 </div>
                 <div class="mt-6">
-                    <a href="/checkout/pro" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
-                        Choose Pro
+                    {% if user_plan == "pro" %}
+                    <a href="/dashboard" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
+                        Go to Dashboard
                     </a>
+                    {% elif user_plan == "enterprise" %}
+                    <span class="inline-block w-full text-center px-6 py-3 bg-gray-200 text-gray-600 font-medium rounded-xl shadow">
+                    Included in your plan
+                </span>
+                    {% else %}
+                    <a href="/checkout/pro" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
+                        Upgrade to Pro →
+                    </a>
+                    {% endif %}
                 </div>
             </div>
 
@@ -166,12 +180,20 @@
                     </ul>
                 </div>
                 <div class="mt-6">
-                    <a href="/checkout/enterprise" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
-                        Choose Enterprise
+                    {% if user_plan == "enterprise" %}
+                    <a href="/dashboard" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
+                        Go to Dashboard
                     </a>
+                    {% else %}
+                    <a href="/checkout/enterprise" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
+                        Upgrade to Enterprise →
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
+
+
     </div>
 </section>
 
