@@ -14,18 +14,20 @@ impl<'a> AlertSentRepository<'a> {
     pub async fn insert_alert(
         &self,
         monitor_id: u64,
-        alert_type: &str,
-        method: &str,
+        alert_type: &str, // 'email' | 'webhook'
+        method: &str,     // npr. 'sendgrid'
+        status: &str,     // 'down' | 'up'
     ) -> Result<u64, sqlx::Error> {
         let result = sqlx::query(
             r#"
-        INSERT INTO alerts_sent (monitor_id, alert_type, method)
-        VALUES (?, ?, ?)
-        "#
+            INSERT INTO alerts_sent (monitor_id, alert_type, method, status)
+            VALUES (?, ?, ?, ?)
+            "#
         )
             .bind(monitor_id)
             .bind(alert_type)
             .bind(method)
+            .bind(status)
             .execute(self.pool)
             .await?;
 
@@ -35,18 +37,20 @@ impl<'a> AlertSentRepository<'a> {
     pub async fn was_recently_sent(
         &self,
         monitor_id: u64,
-        alert_type: &str,
+        alert_type: &str, // 'email' | 'webhook'
+        status: &str,     // 'down' | 'up'
         since: OffsetDateTime,
     ) -> Result<bool, sqlx::Error> {
         let row = sqlx::query(
             r#"
-        SELECT COUNT(*) as count
-        FROM alerts_sent
-        WHERE monitor_id = ? AND alert_type = ? AND sent_at >= ?
-        "#
+            SELECT COUNT(*) as count
+            FROM alerts_sent
+            WHERE monitor_id = ? AND alert_type = ? AND status = ? AND sent_at >= ?
+            "#
         )
             .bind(monitor_id)
             .bind(alert_type)
+            .bind(status)
             .bind(since)
             .fetch_one(self.pool)
             .await?;
@@ -55,5 +59,4 @@ impl<'a> AlertSentRepository<'a> {
 
         Ok(count > 0)
     }
-
 }

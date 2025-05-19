@@ -200,16 +200,24 @@
 <!-- Call to Action Section -->
 <section class="py-20 bg-gray-900 text-white text-center">
     <div class="max-w-3xl mx-auto px-4">
-        <h2 class="text-3xl font-extrabold tracking-tight">Start Monitoring in Minutes</h2>
-        <p class="mt-4 text-lg text-gray-300">Join StatusPulse and never be the last to know when your APIs go down.</p>
-        <div class="mt-8 flex justify-center gap-4">
-            {% if current_user is defined %}
+        {% if current_user is defined %}
+        <h2 class="text-3xl font-extrabold tracking-tight">You're All Set!</h2>
+        <p class="mt-4 text-lg text-gray-300">
+            Your account is active — you can now access your dashboard, create monitors, receive instant downtime alerts, and stay notified about your service health.
+        </p>
+        <div class="mt-8 flex justify-center">
             <a href="/dashboard" class="px-6 py-3 bg-yellow-500 text-black text-lg font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Go to Dashboard</a>
-            {% else %}
-            <a href="/register" class="px-6 py-3 bg-yellow-500 text-black text-lg font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Get Started Free</a>
-            <a href="#pricing" class="px-6 py-3 border border-white text-lg font-medium rounded-xl hover:bg-white hover:bg-yellow-600 transition">View Pricing</a>
-            {% endif %}
         </div>
+        {% else %}
+        <h2 class="text-3xl font-extrabold tracking-tight">Start Monitoring in Minutes</h2>
+        <p class="mt-4 text-lg text-gray-300">
+            Join StatusPulse and never be the last to know when your APIs go down.
+        </p>
+        <div class="mt-8 flex justify-center gap-4">
+            <a href="/register" class="px-6 py-3 bg-yellow-500 text-black text-lg font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Get Started Free</a>
+            <a href="#pricing" class="px-6 py-3 border border-white text-lg font-medium rounded-xl hover:bg-white hover:text-black transition">View Pricing</a>
+        </div>
+        {% endif %}
     </div>
 </section>
 

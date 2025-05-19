@@ -36,6 +36,9 @@ CREATE TABLE IF NOT EXISTS alerts_sent (
     sent_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     alert_type ENUM('email', 'webhook') NOT NULL,
     method VARCHAR(100) NOT NULL,
+    status ENUM('down', 'up') NOT NULL,
     FOREIGN KEY (monitor_id) REFERENCES monitors(id) ON DELETE CASCADE
 );
+
+
 

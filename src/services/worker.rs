@@ -68,84 +68,80 @@ pub async fn start_worker(state: AppState) {
                                 .await;
 
                             let duration_ms = start.elapsed().as_millis() as i32;
+                            let since = OffsetDateTime::now_utc() - TimeDuration::hours(8);
 
                             match response {
                                 Ok(resp) => {
                                     let status_code = resp.status().as_u16() as i32;
                                     info!("Monitor {} responded with {} in {}ms", url, status_code, duration_ms);
 
-                                    if let Err(e) = status_log_repo.insert_log(
+                                    let _ = status_log_repo.insert_log(
                                         monitor_id,
                                         Some(status_code),
                                         Some(duration_ms),
                                         true,
                                         None,
-                                    ).await {
-                                        error!("Failed to insert status log: {:?}", e);
-                                    }
+                                    ).await;
 
-                                    if let Err(e) = monitor_repo.update_is_up(monitor_id, true).await {
-                                        error!("Failed to update is_up=true for monitor {}: {:?}", monitor_id, e);
+                                    let _ = monitor_repo.update_is_up(monitor_id, true).await;
+
+                                    if let Ok(Some(user)) = monitor_repo.get_monitor_owner(monitor_id).await {
+                                        if let Ok(false) = alerts_repo.was_recently_sent(monitor_id, "email", "up", since).await {
+                                            let subject = format!("Monitor RECOVERED: {}", monitor.label);
+                                            let replacements = &[
+                                                ("USER_NAME", user.name.as_str()),
+                                                ("MONITOR_LABEL", monitor.label.as_str()),
+                                                ("MONITOR_URL", monitor.url.as_str()),
+                                            ];
+
+                                            if let Err(e) = sendgrid_service
+                                                .send_alert(
+                                                    &user.email,
+                                                    &subject,
+                                                    "src/services/email_templates/email_monitor_up.html",
+                                                    replacements,
+                                                ).await {
+                                                error!("Failed to send recovery email: {:?}", e);
+                                            } else {
+                                                let _ = alerts_repo.insert_alert(monitor_id, "email", "sendgrid", "up").await;
+                                            }
+                                        }
                                     }
                                 }
+
                                 Err(e) => {
                                     error!("Error pinging {}: {:?}", url, e);
 
-                                    if let Err(e) = status_log_repo.insert_log(
+                                    let _ = status_log_repo.insert_log(
                                         monitor_id,
                                         None,
                                         None,
                                         false,
                                         Some(e.to_string()),
-                                    ).await {
-                                        error!("Failed to insert error log: {:?}", e);
-                                    }
+                                    ).await;
 
-                                    if let Err(e) = monitor_repo.update_is_up(monitor_id, false).await {
-                                        error!("Failed to update is_up=false for monitor {}: {:?}", monitor_id, e);
-                                    }
+                                    let _ = monitor_repo.update_is_up(monitor_id, false).await;
 
-                                    let since = OffsetDateTime::now_utc() - TimeDuration::hours(8);
+                                    if let Ok(Some(user)) = monitor_repo.get_monitor_owner(monitor_id).await {
+                                        if let Ok(false) = alerts_repo.was_recently_sent(monitor_id, "email", "down", since).await {
+                                            let subject = format!("Monitor DOWN: {}", monitor.label);
+                                            let replacements = &[
+                                                ("USER_NAME", user.name.as_str()),
+                                                ("MONITOR_LABEL", monitor.label.as_str()),
+                                                ("MONITOR_URL", monitor.url.as_str()),
+                                            ];
 
-                                    match monitor_repo.get_monitor_owner(monitor_id).await {
-                                        Ok(Some(user)) => {
-                                            match alerts_repo.was_recently_sent(monitor_id, "email", since).await {
-                                                Ok(false) => {
-                                                    let subject = format!("Monitor DOWN: {}", monitor.label);
-
-                                                    let replacements = &[
-                                                        ("USER_NAME", user.name.as_str()),
-                                                        ("MONITOR_LABEL", monitor.label.as_str()),
-                                                        ("MONITOR_URL", monitor.url.as_str()),
-                                                    ];
-
-                                                    if let Err(e) = sendgrid_service
-                                                        .send_alert(
-                                                            &user.email,
-                                                            &subject,
-                                                            "src/services/email_templates/email_monitor_down.html",
-                                                            replacements,
-                                                        ).await {
-                                                        error!("Failed to send alert email: {:?}", e);
-                                                    } else {
-                                                        if let Err(e) = alerts_repo.insert_alert(monitor_id, "email", "sendgrid").await {
-                                                            error!("Failed to insert alert log: {:?}", e);
-                                                        }
-                                                    }
-                                                }
-                                                Ok(true) => {
-                                                    info!("Alert already sent recently for monitor_id {}", monitor_id);
-                                                }
-                                                Err(e) => {
-                                                    error!("Failed to check recent alerts: {:?}", e);
-                                                }
+                                            if let Err(e) = sendgrid_service
+                                                .send_alert(
+                                                    &user.email,
+                                                    &subject,
+                                                    "src/services/email_templates/email_monitor_down.html",
+                                                    replacements,
+                                                ).await {
+                                                error!("Failed to send down alert email: {:?}", e);
+                                            } else {
+                                                let _ = alerts_repo.insert_alert(monitor_id, "email", "sendgrid", "down").await;
                                             }
-                                        }
-                                        Ok(None) => {
-                                            error!("No user found for monitor_id {}", monitor_id);
-                                        }
-                                        Err(e) => {
-                                            error!("Failed to fetch monitor owner: {:?}", e);
                                         }
                                     }
                                 }
