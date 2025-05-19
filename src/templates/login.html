@@ -69,4 +69,18 @@
                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
     });
 </script>
+
+<!-- reCAPTCHA script -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const flash = document.querySelector('[data-flash]');
+        if (flash) {
+            setTimeout(() => {
+                flash.classList.add('opacity-0', 'transition', 'duration-500');
+                setTimeout(() => flash.remove(), 500);
+            }, 4000); // 4 sekunde prikaza
+        }
+    });
+</script>
 {% endblock content %}

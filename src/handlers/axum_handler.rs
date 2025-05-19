@@ -530,11 +530,22 @@ pub async fn submit_contact_form(
         .collect();
 
     let message_lower = form.message.to_lowercase();
-    let contains_spam_word = spam_keywords.iter().any(|kw| message_lower.contains(kw));
+
+    let contains_spam_word = spam_keywords.iter().any(|kw| {
+        if kw.contains(' ') {
+            message_lower.contains(kw)
+        } else {
+            let pattern = format!(r"\b{}\b", regex::escape(kw));
+            regex::Regex::new(&pattern).unwrap().is_match(&message_lower)
+        }
+    });
 
     let link_count = message.matches("http").count();
-    let suspicious_email = regex::Regex::new(r"(?i)[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}").unwrap()
-        .is_match(&message);
+    let email_re = regex::Regex::new(r"(?i)[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}").unwrap();
+    let suspicious_email = email_re
+        .find_iter(&message_lower)
+        .any(|mat| mat.as_str() != form.email.to_lowercase());
+
 
     if message.len() < 10 || contains_spam_word || link_count > 0 || suspicious_email {
         tracing::warn!("🚫 Blocked suspicious contact message from {}: {:?}", form.email, form.message);
