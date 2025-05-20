@@ -7,12 +7,13 @@ mod utils;
 
 use axum::{Router, routing::get, Extension};
 use std::{env, net::SocketAddr};
+use axum::routing::get_service;
 use dotenvy::dotenv;
 use sqlx::{mysql::MySqlPoolOptions, migrate::Migrator};
 use tracing_subscriber::{fmt, EnvFilter};
 use services::worker;
 use tera::Tera;
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 use crate::handlers::axum_handler::error_page;
 
 static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
@@ -74,6 +75,7 @@ async fn main() -> Result<(), sqlx::Error> {
             "/auth",
             routes::api_auth_routes().with_state(state.clone())
         )
+        .route("/robots.txt", get_service(ServeFile::new("static/robots.txt")))  // TODO: Zameni hosting kad uradis deploy
         .nest_service("/static", ServeDir::new("static"))
         .nest("/webhook", routes::lemon_routes::lemon_routes().with_state(state.clone()))
         .nest("/", routes::frontend_auth_routes().with_state(state.clone()))
