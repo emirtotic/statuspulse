@@ -36,9 +36,5 @@ base64 = "0.22.1"
 anyhow = "1.0.98"
 
 sqlx = { version = "0.7", features = ["mysql", "runtime-tokio-rustls", "migrate", "time"] }
-reqwest = { version = "0.11", features = ["json", "rustls-tls"] }
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
 sendgrid = { version = "0.11", features = ["async", "rustls"] }
-
-[patch.crates-io]
-openssl = { version = "*", optional = true }
-openssl-sys = { version = "*", optional = true }
