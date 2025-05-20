@@ -2,6 +2,7 @@
 name = "statuspulse"
 version = "0.1.0"
 edition = "2021"
+include = ["src/templates/**/*", "static/**/*", "src/**/*", "Cargo.toml", "Cargo.lock"]
 
 [dependencies]
 axum = { version = "0.7", features = ["macros"] }

@@ -20,7 +20,7 @@
     <meta name="twitter:image" content="https://statuspulse.app/static/images/og-preview.png" />
 
     <title>{% block title %}StatusPulse{% endblock title %}</title>
-    <link rel="icon" type="image/png" href="/images/favicon.png">
+    <link rel="icon" type="image/png" href="/static/images/favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -40,8 +40,8 @@
 <header class="w-full fixed top-0 z-50 bg-gray-200 shadow-md">
     <div class="max-w-7xl mx-auto px-4 py-1 flex justify-between items-center">
         <!-- Logo -->
-        <a href="/static" class="flex items-center space-x-2">
-            <img src="/images/logo.png" alt="StatusPulse Logo" class="h-14 w-auto object-contain">
+        <a href="/" class="flex items-center space-x-2">
+            <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-14 w-auto object-contain">
         </a>
 
         <!-- Hamburger -->
@@ -56,17 +56,17 @@
         <nav class="hidden sm:flex items-center space-x-3">
             {% if current_user is defined %}
             {% if on_dashboard %}
-            <a href="/static" class="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Home</a>
+            <a href="/" class="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Home</a>
             {% else %}
             <a href="/dashboard" class="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Dashboard</a>
             {% endif %}
-            <a href="/static#features" class="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
-            <a href="/static#contact" class="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Contact</a>
+            <a href="/#features" class="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
+            <a href="/#contact" class="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Contact</a>
             <a href="/logout" class="px-3 py-1.5 text-sm font-medium bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition">Logout</a>
             {% else %}
             <a href="/login" class="px-3 py-1.5 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">Login</a>
-            <a href="/static#features" class="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
-            <a href="/static#contact" class="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Contact</a>
+            <a href="/#features" class="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
+            <a href="/#contact" class="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Contact</a>
             <a href="/register" class="px-3 py-1.5 text-sm font-medium border border-black text-black rounded-xl hover:bg-neutral-100 transition">Get Started</a>
             {% endif %}
         </nav>
@@ -77,13 +77,13 @@
         <div class="flex flex-col space-y-2 text-center">
             {% if current_user is defined %}
             <a href="/dashboard" class="block px-4 py-2 bg-black text-white rounded-xl hover:bg-yellow-600 transition">Dashboard</a>
-            <a href="/static#features" class="block px-4 py-2 bg-black text-white rounded-xl hover:bg-yellow-600 transition">About</a>
-            <a href="/static#contact" class="block px-4 py-2 bg-black text-white rounded-xl hover:bg-yellow-600 transition">Contact</a>
+            <a href="/#features" class="block px-4 py-2 bg-black text-white rounded-xl hover:bg-yellow-600 transition">About</a>
+            <a href="/#contact" class="block px-4 py-2 bg-black text-white rounded-xl hover:bg-yellow-600 transition">Contact</a>
             <a href="/logout" class="block px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition">Logout</a>
             {% else %}
             <a href="/login" class="block px-4 py-2 bg-yellow-500 text-black rounded-xl hover:bg-yellow-600 transition">Login</a>
-            <a href="/static#features" class="block px-4 py-2 bg-black text-white rounded-xl hover:bg-yellow-600 transition">About</a>
-            <a href="/static#contact" class="block px-4 py-2 bg-black text-white rounded-xl hover:bg-yellow-600 transition">Contact</a>
+            <a href="/#features" class="block px-4 py-2 bg-black text-white rounded-xl hover:bg-yellow-600 transition">About</a>
+            <a href="/#contact" class="block px-4 py-2 bg-black text-white rounded-xl hover:bg-yellow-600 transition">Contact</a>
             <a href="/register" class="block px-4 py-2 border border-black text-black rounded-xl hover:bg-neutral-100 transition">Get Started</a>
             {% endif %}
         </div>
