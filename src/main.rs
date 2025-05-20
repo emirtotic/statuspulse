@@ -26,6 +26,25 @@ pub struct AppState {
     pub lemon_enterprise_url: String,
 }
 
+fn build_tera() -> Tera {
+    let mut tera = Tera::default();
+
+    tera.add_raw_template("base.html", include_str!("templates/base.html")).unwrap();
+    tera.add_raw_template("change_password.html", include_str!("templates/change_password.html")).unwrap();
+    tera.add_raw_template("create_monitor.html", include_str!("templates/create_monitor.html")).unwrap();
+    tera.add_raw_template("dashboard.html", include_str!("templates/dashboard.html")).unwrap();
+    tera.add_raw_template("edit_monitor.html", include_str!("templates/edit_monitor.html")).unwrap();
+    tera.add_raw_template("error.html", include_str!("templates/error.html")).unwrap();
+    tera.add_raw_template("error_500.html", include_str!("templates/error_500.html")).unwrap();
+    tera.add_raw_template("forgot_password.html", include_str!("templates/forgot_password.html")).unwrap();
+    tera.add_raw_template("index.html", include_str!("templates/index.html")).unwrap();
+    tera.add_raw_template("login.html", include_str!("templates/login.html")).unwrap();
+    tera.add_raw_template("register.html", include_str!("templates/register.html")).unwrap();
+    tera.add_raw_template("reset_password.html", include_str!("templates/reset_password.html")).unwrap();
+
+    tera
+}
+
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
     dotenv().ok();
@@ -48,7 +67,6 @@ async fn main() -> Result<(), sqlx::Error> {
     tracing::info!("Migrations applied. DB is ready.");
 
     let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
-
     let lemon_pro_url = env::var("LEMON_PRO_URL").expect("LEMON_PRO_URL must be set");
     let lemon_enterprise_url = env::var("LEMON_ENTERPRISE_URL").unwrap_or_default();
 
@@ -59,13 +77,10 @@ async fn main() -> Result<(), sqlx::Error> {
         lemon_enterprise_url,
     };
 
-    // Tera templates
-    let tera = Tera::new("src/templates/**/*").expect("Failed to load templates");
+    let tera = build_tera();
 
-    // Start ping worker in background
     tokio::spawn(worker::start_worker(state.clone()));
 
-    // Full router
     let app = Router::new()
         .nest(
             "/api",
@@ -75,7 +90,7 @@ async fn main() -> Result<(), sqlx::Error> {
             "/auth",
             routes::api_auth_routes().with_state(state.clone())
         )
-        .route("/robots.txt", get_service(ServeFile::new("static/robots.txt")))  // TODO: Zameni hosting kad uradis deploy
+        .route("/robots.txt", get_service(ServeFile::new("static/robots.txt")))
         .nest_service("/static", ServeDir::new("static"))
         .nest("/webhook", routes::lemon_routes::lemon_routes().with_state(state.clone()))
         .nest("/", routes::frontend_auth_routes().with_state(state.clone()))
