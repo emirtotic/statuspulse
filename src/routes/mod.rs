@@ -9,7 +9,7 @@ pub fn api_auth_routes() -> Router<AppState> {
     Router::new()
         .route("/login", post(auth_handler::login))
         .route("/register", post(auth_handler::register))
-        .route("/forgot-password", get(auth_handler::form_reset_password))
+        .route("/forgot-password", get(auth_handler::form_forgot_password))
         .route("/forgot-password", post(change_password::process_forgot_password))
 }
 
@@ -29,7 +29,7 @@ pub fn frontend_auth_routes() -> Router<AppState> {
         // password change routes
         .route("/settings/change-password", get(change_password::change_password_form))
         .route("/settings/change-password", post(change_password::process_password_change))
-        .route("/forgot-password", get(auth_handler::form_reset_password).post(change_password::process_forgot_password))
+        .route("/forgot-password", get(auth_handler::form_forgot_password).post(change_password::process_forgot_password))
         .route("/reset-password/:token", get(auth_handler::form_reset_password))
         .route("/reset-password/:token", post(change_password::process_reset_password))
 

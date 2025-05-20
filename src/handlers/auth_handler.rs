@@ -197,10 +197,12 @@ pub async fn form_forgot_password(
         ctx.insert("flash", cookie.value());
     }
 
-    let rendered = tera.render("forgot_password.html", &ctx)
+    let rendered = tera
+        .render("forgot_password.html", &ctx)
         .unwrap_or_else(|_| "<h1>Error loading forgot password form</h1>".to_string());
 
     Html(rendered).into_response()
 }
+
 
 
