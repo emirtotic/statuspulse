@@ -101,4 +101,12 @@ impl<'a> AuthService<'a> {
             &EncodingKey::from_secret(self.jwt_secret.as_bytes()),
         ).map_err(|_| AuthError::TokenError)
     }
+
+    pub async fn send_password_changed_email(&self, email: &str, name: &str) -> Result<(), anyhow::Error> {
+        self.sendgrid
+            .send_password_changed_notification(email, name)
+            .await
+            .map_err(|e| anyhow::anyhow!("SendGrid error: {}", e))
+    }
+
 }

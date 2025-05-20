@@ -1,7 +1,6 @@
 use axum::{Router, routing::{get, post}};
 use crate::{AppState, handlers::{auth_handler, axum_handler}};
-use crate::handlers::checkout_handler;
-use crate::handlers::checkout_handler::checkout_handler;
+use crate::handlers::{change_password, checkout_handler};
 
 pub mod monitor_routes;
 pub mod lemon_routes;
@@ -10,11 +9,12 @@ pub fn api_auth_routes() -> Router<AppState> {
     Router::new()
         .route("/login", post(auth_handler::login))
         .route("/register", post(auth_handler::register))
+
 }
 
 pub fn frontend_auth_routes() -> Router<AppState> {
     Router::new()
-        .route("/", axum::routing::get(axum_handler::landing_page))
+        .route("/", get(axum_handler::landing_page))
         .route("/login", get(axum_handler::form_login).post(auth_handler::login))
         .route("/register", get(axum_handler::form_register).post(auth_handler::register))
         .route("/dashboard", get(axum_handler::dashboard))
@@ -25,7 +25,9 @@ pub fn frontend_auth_routes() -> Router<AppState> {
         .route("/checkout/:plan", get(checkout_handler::checkout_handler))
         .route("/error", get(axum_handler::error_page))
         .route("/contact", post(axum_handler::submit_contact_form))
-
+        // password change routes
+        .route("/settings/change-password", get(change_password::change_password_form))
+        .route("/settings/change-password", post(change_password::process_password_change))
 }
 
 

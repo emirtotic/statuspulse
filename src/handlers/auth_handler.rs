@@ -1,11 +1,15 @@
-use axum::{
-    extract::{State, Form},
-    response::{IntoResponse, Redirect},
-};
-use axum_extra::extract::cookie::{Cookie, CookieJar};
-use serde::{Deserialize, Serialize};
-use crate::{services::auth_service::AuthService, AppState};
+use crate::db::user_repository::UserRepository;
 use crate::services::sendgrid_service::SendGridService;
+use crate::{services::auth_service::AuthService, AppState};
+use axum::extract::{Path, Query};
+use axum::response::Html;
+use axum::{extract::{Form, State}, response::{IntoResponse, Redirect}, Extension};
+use axum_extra::extract::cookie::{Cookie, CookieJar};
+use http::StatusCode;
+use serde::{Deserialize, Serialize};
+use tera::Tera;
+use time::OffsetDateTime;
+use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct RegisterRequest {

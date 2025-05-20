@@ -112,4 +112,21 @@ impl SendGridService {
         Ok(())
     }
 
+    pub async fn send_password_changed_notification(
+        &self,
+        to_email: &str,
+        user_name: &str,
+    ) -> Result<(), String> {
+        let subject = "Your Password Has Been Changed";
+        let template_path = "src/services/email_templates/email_password_changed.html";
+
+        let replacements = [
+            ("user_name", user_name),
+            ("support_email", "support@statuspulse.app"),
+        ];
+
+        self.send_alert(to_email, subject, template_path, &replacements).await
+    }
+
+
 }

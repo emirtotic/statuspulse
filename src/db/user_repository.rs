@@ -134,4 +134,21 @@ impl<'a> UserRepository<'a> {
         Ok(())
     }
 
+    pub async fn update_password(&self, user_id: i64, new_password_hash: &str) -> Result<u64, sqlx::Error> {
+        let result = sqlx::query(
+            r#"
+        UPDATE users
+        SET password_hash = ?
+        WHERE id = ?
+        "#
+        )
+            .bind(new_password_hash)
+            .bind(user_id)
+            .execute(self.pool)
+            .await?;
+
+        Ok(result.rows_affected())
+    }
+
+
 }
