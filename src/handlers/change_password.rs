@@ -88,7 +88,7 @@ pub async fn process_forgot_password(
     };
 
     // prepare email
-    let reset_url = format!("http://localhost:3000/reset-password/{}", token);
+    let reset_url = format!("https://statuspulse.up.railway.app/reset-password/{}", token);
 
     let sendgrid_service = SendGridService::new(
         std::env::var("SENDGRID_API_KEY").expect("SENDGRID_API_KEY must be set"),
