@@ -12,12 +12,12 @@
         {% if user_plan == "free" and monitor_count >= 2 %}
         <div class="bg-yellow-100 text-yellow-800 px-4 py-3 rounded-xl text-center mb-6 font-medium border border-yellow-300">
             You have reached the limit of 2 monitors for the Free plan.
-            <a href="/#pricing" class="block mt-2 text-yellow-700 underline hover:text-yellow-900">Upgrade to Pro or Enterprise →</a>
+            <a href="/static#pricing" class="block mt-2 text-yellow-700 underline hover:text-yellow-900">Upgrade to Pro or Enterprise →</a>
         </div>
         {% elif user_plan == "pro" and monitor_count >= 15 %}
         <div class="bg-orange-100 text-orange-800 px-4 py-3 rounded-xl text-center mb-6 font-medium border border-orange-300">
             You have reached the limit of 15 monitors for the Pro plan.
-            <a href="/#pricing" class="block mt-2 text-orange-700 underline hover:text-orange-900">Upgrade to Enterprise →</a>
+            <a href="/static#pricing" class="block mt-2 text-orange-700 underline hover:text-orange-900">Upgrade to Enterprise →</a>
         </div>
         {% endif %}
         {% endif %}

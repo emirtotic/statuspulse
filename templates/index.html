@@ -20,7 +20,7 @@
     <meta name="twitter:description" content="Real-time API monitoring, fast alerts, and simple setup." />
     <meta name="twitter:image" content="https://statuspulse.app/static/images/og-preview.png" />
     <title>StatusPulse</title>
-    <link rel="icon" type="image/png" href="/static/images/favicon.png">
+    <link rel="icon" type="image/png" href="/images/favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
@@ -32,18 +32,18 @@
 <!-- Navbar -->
 <header class="w-full fixed top-0 z-50 bg-gray-200 shadow-md">
     <div class="max-w-7xl mx-auto px-4 py-1 flex justify-between items-center">
-        <a href="/" class="flex items-center space-x-2">
-            <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-14 w-auto object-contain">
+        <a href="/static" class="flex items-center space-x-2">
+            <img src="/images/logo.png" alt="StatusPulse Logo" class="h-14 w-auto object-contain">
         </a>
         <div class="hidden sm:flex items-center space-x-3">
             {% if current_user is defined %}
             <a href="/dashboard" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Dashboard</a>
-            <a href="/#features" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
-            <a href="/#contact" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Contact</a>
+            <a href="/static#features" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
+            <a href="/static#contact" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Contact</a>
             <a href="/logout" class="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition">Logout</a>
             {% else %}
-            <a href="/#features" class="px-4 py-2 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">About</a>
-            <a href="/#contact" class="px-4 py-2 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">Contact</a>
+            <a href="/static#features" class="px-4 py-2 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">About</a>
+            <a href="/static#contact" class="px-4 py-2 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">Contact</a>
             <a href="/login" class="px-4 py-2 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">Login</a>
             <a href="/register" class="px-4 py-2 text-sm font-medium border bg-neutral-100 border-black text-black rounded-xl hover:bg-yellow-500 transition">Register</a>
             {% endif %}
