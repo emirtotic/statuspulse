@@ -1,5 +1,5 @@
 use axum_extra::response::Html;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tera::Tera;
 use axum::{
     extract::{Form, State},
@@ -18,7 +18,11 @@ use argon2::{
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
+use axum::extract::Path;
+use base64::encode;
+use chrono::Utc;
 use http::StatusCode;
+use jsonwebtoken::{EncodingKey, Header};
 use rand_core::OsRng;
 use tracing::error;
 use crate::services::auth_service::AuthService;
@@ -30,6 +34,85 @@ pub struct ChangePasswordForm {
     pub new_password: String,
     pub confirm_new_password: String,
 }
+
+#[derive(Deserialize)]
+pub struct ForgotPasswordForm {
+    pub email: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct PasswordResetClaims {
+    sub: u64, // user_id
+    exp: usize,
+}
+
+#[derive(Deserialize)]
+pub struct ResetPasswordForm {
+    pub new_password: String,
+    pub confirm_new_password: String,
+}
+
+#[axum::debug_handler]
+pub async fn process_forgot_password(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Form(form): Form<ForgotPasswordForm>,
+) -> impl IntoResponse {
+    let user_repo = UserRepository::new(&state.db);
+
+    let user = match user_repo.get_by_email(&form.email).await {
+        Ok(Some(u)) => u,
+        _ => {
+            // Nikad ne otkrivamo da li email postoji
+            return redirect_with_flash(jar, "/forgot-password", "If that email exists, a reset link has been sent.").into_response();
+        }
+    };
+
+    // create JWT token with 30 minutes duration
+    let expiration = Utc::now() + chrono::Duration::minutes(30);
+    let claims = PasswordResetClaims {
+        sub: user.id,
+        exp: expiration.timestamp() as usize,
+    };
+
+    let token = match jsonwebtoken::encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(state.jwt_secret.as_bytes()),
+    ) {
+        Ok(token) => token,
+        Err(err) => {
+            error!("❌ Failed to create password reset token: {:?}", err);
+            return redirect_with_flash(jar, "/forgot-password", "Something went wrong. Please try again.").into_response();
+        }
+    };
+
+    // prepare email
+    let reset_url = format!("http://localhost:3000/reset-password/{}", token);
+
+    let sendgrid_service = SendGridService::new(
+        std::env::var("SENDGRID_API_KEY").expect("SENDGRID_API_KEY must be set"),
+        std::env::var("SENDGRID_FROM_EMAIL").expect("SENDGRID_FROM_EMAIL must be set"),
+    );
+
+    let email_result = sendgrid_service
+        .send_alert(
+            &user.email,
+            "Reset Your Password",
+            "src/services/email_templates/email_password_reset.html",
+            &[("user_name", &user.name), ("reset_url", &reset_url)],
+        )
+        .await;
+
+    if let Err(e) = email_result {
+        error!("❌ Failed to send password reset email to {}: {:?}", user.email, e);
+    } else {
+        tracing::info!("✅ Sent password reset email to {}", user.email);
+    }
+
+    redirect_with_flash(jar, "/forgot-password", "If that email exists, a reset link has been sent.").into_response()
+}
+
 
 #[axum::debug_handler]
 pub async fn change_password_form(
@@ -166,6 +249,74 @@ pub fn redirect_with_flash(jar: CookieJar, location: &str, message: &str) -> imp
     flash_cookie.set_max_age(Duration::seconds(5));
 
     (jar.add(flash_cookie), Redirect::to(&location_owned))
+}
+
+#[axum::debug_handler]
+pub async fn process_reset_password(
+    Path(token): Path<String>,
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Form(form): Form<ResetPasswordForm>,
+) -> impl IntoResponse {
+
+    let claims = match jsonwebtoken::decode::<PasswordResetClaims>(
+        &token,
+        &jsonwebtoken::DecodingKey::from_secret(state.jwt_secret.as_bytes()),
+        &jsonwebtoken::Validation::default(),
+    ) {
+        Ok(data) => data.claims,
+        Err(e) => {
+            error!("❌ Invalid or expired reset token: {:?}", e);
+            return redirect_with_flash(jar, "/login", "Invalid or expired reset link.").into_response();
+        }
+    };
+
+    if form.new_password != form.confirm_new_password {
+        return redirect_with_flash(
+            jar,
+            &format!("/reset-password/{}", token),
+            "Passwords do not match",
+        )
+            .into_response();
+    }
+
+    let new_hash = match hash_password(&form.new_password) {
+        Ok(h) => h,
+        Err(e) => {
+            error!("❌ Failed to hash password: {:?}", e);
+            return redirect_with_flash(jar, "/", "Something went wrong. Please try again.").into_response();
+        }
+    };
+
+    let user_repo = UserRepository::new(&state.db);
+    let user = match user_repo.get_user_by_id(claims.sub).await {
+        Ok(Some(u)) => u,
+        _ => {
+            return redirect_with_flash(jar, "/", "User not found.").into_response();
+        }
+    };
+
+    if let Err(e) = user_repo.update_password(user.id as i64, &new_hash).await {
+        error!("❌ Failed to update password in DB: {:?}", e);
+        return redirect_with_flash(jar, "/", "Failed to update password.").into_response();
+    }
+
+    let sendgrid_service = SendGridService::new(
+        std::env::var("SENDGRID_API_KEY").expect("SENDGRID_API_KEY must be set"),
+        std::env::var("SENDGRID_FROM_EMAIL").expect("SENDGRID_FROM_EMAIL must be set"),
+    );
+
+    if let Err(e) = sendgrid_service
+        .send_password_changed_notification(&user.email, &user.name)
+        .await
+    {
+        error!("❌ Failed to send password change email to {}: {:?}", user.email, e);
+    } else {
+        tracing::info!("✅ Password change email sent to {}", user.email);
+    }
+
+    redirect_with_flash(jar, "/login", "Password successfully updated. You can now sign in.")
+        .into_response()
 }
 
 

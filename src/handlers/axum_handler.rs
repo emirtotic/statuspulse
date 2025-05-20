@@ -11,7 +11,7 @@ use axum::response::IntoResponse;
 use axum::response::Response;
 use axum::{extract::State, response::Redirect};
 use http::{header, HeaderValue, StatusCode};
-use serde::Deserialize;
+use serde::{Deserialize};
 use crate::services::sendgrid_service::SendGridService;
 
 #[derive(Deserialize)]

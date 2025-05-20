@@ -5,3 +5,4 @@ pub mod axum_handler;
 pub mod checkout_handler;
 pub mod lemon_webhook_handler;
 pub mod change_password;
+mod reset_password;

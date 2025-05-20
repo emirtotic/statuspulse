@@ -167,3 +167,40 @@ pub async fn register(
     }
 }
 
+#[axum::debug_handler]
+pub async fn form_reset_password(
+    Extension(tera): Extension<Tera>,
+    Path(token): Path<String>,
+    jar: CookieJar,
+) -> impl IntoResponse {
+    let mut ctx = tera::Context::new();
+    ctx.insert("token", &token);
+
+    if let Some(cookie) = jar.get("flash") {
+        ctx.insert("flash", cookie.value());
+    }
+
+    let rendered = tera.render("reset_password.html", &ctx)
+        .unwrap_or_else(|_| "<h1>Error loading reset form</h1>".to_string());
+
+    Html(rendered).into_response()
+}
+
+#[axum::debug_handler]
+pub async fn form_forgot_password(
+    Extension(tera): Extension<Tera>,
+    jar: CookieJar,
+) -> impl IntoResponse {
+    let mut ctx = tera::Context::new();
+
+    if let Some(cookie) = jar.get("flash") {
+        ctx.insert("flash", cookie.value());
+    }
+
+    let rendered = tera.render("forgot_password.html", &ctx)
+        .unwrap_or_else(|_| "<h1>Error loading forgot password form</h1>".to_string());
+
+    Html(rendered).into_response()
+}
+
+
