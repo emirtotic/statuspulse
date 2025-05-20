@@ -6,8 +6,10 @@
 
 <!-- Hero Section -->
 <section class="py-24 bg-gray-50 text-center">
+
     <div class="max-w-7xl mx-auto px-4">
-        <div class="flex justify-end items-center mb-4">
+        <div class="flex justify-between items-center mb-4">
+
             {% if user_plan == "free" %}
             <span class="text-xs font-bold text-yellow-800 bg-yellow-100 border border-yellow-300 px-4 py-1 rounded-xl tracking-wide">
         PLAN: FREE
@@ -21,6 +23,20 @@
         PLAN: ENTERPRISE
     </span>
             {% endif %}
+
+            {% if current_user is defined %}
+            <div class="flex flex-col items-end space-y-2 ml-4">
+                <a href="/settings/change-password"
+                   class="px-4 py-1.5 text-xs font-semibold bg-yellow-500 text-black rounded-xl hover:bg-yellow-600 transition shadow-sm">
+                    🔒 Change Password
+                </a>
+                <a href="/settings/change-email"
+                   class="px-4 py-1.5 text-xs font-semibold bg-yellow-500 text-black rounded-xl hover:bg-yellow-600 transition shadow-sm">
+                    📧 Change Email
+                </a>
+            </div>
+            {% endif %}
+
         </div>
 
         <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight">
