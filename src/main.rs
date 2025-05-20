@@ -60,7 +60,9 @@ async fn main() -> Result<(), sqlx::Error> {
     };
 
     // Tera templates
-    let tera = Tera::new("src/templates/**/*").expect("Failed to load templates");
+    // let tera = Tera::new("src/templates/**/*").expect("Failed to load templates");
+    let tera = Tera::new("templates/**/*").expect("Failed to load templates");
+
 
     // Start ping worker in background
     tokio::spawn(worker::start_worker(state.clone()));
