@@ -3,6 +3,10 @@ name = "statuspulse"
 version = "0.1.0"
 edition = "2021"
 
+[build]
+target = "x86_64-unknown-linux-gnu"
+
+
 [dependencies]
 axum = { version = "0.7", features = ["macros"] }
 axum-extra = { version = "0.9", features = ["typed-header", "cookie"] }
