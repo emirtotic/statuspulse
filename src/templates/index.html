@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="canonical" href="https://statuspulse.app" />
     <meta name="description" content="StatusPulse is the fastest way to monitor your APIs and get real-time outage alerts.">
     <meta name="keywords" content="API monitoring, uptime alerts, status page, StatusPulse">
@@ -19,6 +20,7 @@
     <meta name="twitter:title" content="StatusPulse – API Monitoring and Alerts" />
     <meta name="twitter:description" content="Real-time API monitoring, fast alerts, and simple setup." />
     <meta name="twitter:image" content="https://statuspulse.app/static/images/og-preview.png" />
+
     <title>StatusPulse</title>
     <link rel="shortcut icon" href="/static/images/favicon.png" type="image/png">
     <link rel="icon" href="/static/images/favicon.png" type="image/png">
@@ -32,11 +34,16 @@
 
 <!-- Navbar -->
 <header class="w-full fixed top-0 z-50 bg-gray-200 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 py-1 flex justify-between items-center">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <a href="/" class="flex items-center space-x-2">
-            <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-14 w-auto object-contain">
+            <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-10 sm:h-14 w-auto object-contain">
         </a>
-        <div class="hidden sm:flex items-center space-x-3">
+        <button id="menu-toggle" class="sm:hidden text-black focus:outline-none">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+        <nav id="nav-menu" class="hidden sm:flex items-center space-x-3">
             {% if current_user is defined %}
             <a href="/dashboard" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Dashboard</a>
             <a href="/#features" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
@@ -48,7 +55,20 @@
             <a href="/login" class="px-4 py-2 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">Login</a>
             <a href="/register" class="px-4 py-2 text-sm font-medium border bg-neutral-100 border-black text-black rounded-xl hover:bg-yellow-500 transition">Register</a>
             {% endif %}
-        </div>
+        </nav>
+    </div>
+    <div id="mobile-menu" class="sm:hidden hidden flex-col space-y-2 px-4 pb-4 text-center">
+        {% if current_user is defined %}
+        <a href="/dashboard" class="block px-4 py-2 bg-black hover:bg-yellow-600 text-white rounded-xl">Dashboard</a>
+        <a href="/#features" class="block px-4 py-2 bg-black hover:bg-yellow-600 text-white rounded-xl">About</a>
+        <a href="/#contact" class="block px-4 py-2 bg-black hover:bg-yellow-600 text-white rounded-xl">Contact</a>
+        <a href="/logout" class="block px-4 py-2 bg-red-600 hover:bg-yellow-600 text-white rounded-xl">Logout</a>
+        {% else %}
+        <a href="/#features" class="block px-4 py-2 bg-black hover:bg-yellow-600 text-white rounded-xl">About</a>
+        <a href="/#contact" class="block px-4 py-2 bg-black hover:bg-yellow-600 text-white rounded-xl">Contact</a>
+        <a href="/login" class="block px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl">Login</a>
+        <a href="/register" class="block px-4 py-2 bg-neutral-100 border border-black text-black rounded-xl">Register</a>
+        {% endif %}
     </div>
 </header>
 
@@ -312,6 +332,13 @@
                 setTimeout(() => flash.remove(), 500);
             }, 5000);
         }
+    });
+</script>
+
+<script>
+    document.getElementById('menu-toggle').addEventListener('click', function () {
+        const menu = document.getElementById('mobile-menu');
+        menu.classList.toggle('hidden');
     });
 </script>
 
