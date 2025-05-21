@@ -156,8 +156,8 @@ pub async fn start_worker(state: AppState) {
                 }
             }
 
-            info!("Sleeping 60 seconds before next cycle...");
-            sleep(Duration::from_secs(60)).await;
+            info!("Sleeping 43200 seconds before next cycle...");
+            sleep(Duration::from_secs(43200)).await;
         }
     });
 }
