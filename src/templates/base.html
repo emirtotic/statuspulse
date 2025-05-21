@@ -114,11 +114,20 @@
 
 <!-- Toggle Script -->
 <script>
-    const btn = document.getElementById('menu-btn');
-    const menu = document.getElementById('mobile-menu');
+    document.addEventListener("DOMContentLoaded", function () {
+        const toggleButton = document.getElementById("menu-btn");
+        const mobileMenu = document.getElementById("mobile-menu");
+        const navLinks = mobileMenu.querySelectorAll("a");
 
-    btn.addEventListener('click', () => {
-        menu.classList.toggle('hidden');
+        toggleButton.addEventListener("click", () => {
+            mobileMenu.classList.toggle("hidden");
+        });
+
+        navLinks.forEach(link => {
+            link.addEventListener("click", () => {
+                mobileMenu.classList.add("hidden");
+            });
+        });
     });
 </script>
 

@@ -336,12 +336,22 @@
 </script>
 
 <script>
-    document.getElementById('menu-toggle').addEventListener('click', function () {
-        const menu = document.getElementById('mobile-menu');
-        menu.classList.toggle('hidden');
+    document.addEventListener("DOMContentLoaded", function () {
+        const toggleButton = document.getElementById("menu-toggle");
+        const mobileMenu = document.getElementById("mobile-menu");
+        const navLinks = mobileMenu.querySelectorAll("a");
+
+        toggleButton.addEventListener("click", () => {
+            mobileMenu.classList.toggle("hidden");
+        });
+
+        navLinks.forEach((link) => {
+            link.addEventListener("click", () => {
+                mobileMenu.classList.add("hidden");
+            });
+        });
     });
 </script>
-
 
 <!-- Footer -->
 <footer class="w-full bg-gray-900 border-t border-neutral-200 py-6 text-center text-sm text-gray-50 mt-auto">
