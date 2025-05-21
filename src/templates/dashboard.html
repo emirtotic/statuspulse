@@ -58,7 +58,8 @@
         {% else %}
 
         <!-- Monitors Table -->
-        <div class="overflow-x-auto shadow-lg rounded-2xl border border-neutral-200">
+        <!-- Desktop Table -->
+        <div class="hidden sm:block overflow-x-auto rounded-2xl border border-neutral-200 shadow-lg">
             <table class="min-w-full bg-white text-sm">
                 <thead class="bg-yellow-500 text-neutral-700 uppercase text-xs font-semibold">
                 <tr>
@@ -109,6 +110,57 @@
                 </tbody>
             </table>
         </div>
+        <!-- Mobile Cards -->
+        <div class="sm:hidden space-y-4 mt-6">
+            {% for monitor in monitors %}
+            <div class="p-4 border border-neutral-200 rounded-xl shadow-sm bg-white">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-base font-semibold">{{ monitor.label }}</h3>
+                    <span class="text-xs bg-gray-100 px-2 py-0.5 rounded border font-medium">
+                {{ monitor.interval_mins }} min
+            </span>
+                </div>
+                <p class="text-sm text-gray-600 break-words mb-1">
+                    <a href="{{ monitor.url }}" target="_blank" class="text-blue-600 hover:underline">
+                        {{ monitor.url }}
+                    </a>
+                </p>
+                <p class="text-sm text-left">
+                    <strong>Monitor Status:</strong>
+                    {% if monitor.is_active %}
+                    <span class="text-green-600">Active</span>
+                    {% else %}
+                    <span class="text-red-600">Inactive</span>
+                    {% endif %}
+                </p>
+                <p class="text-sm text-left">
+                    <strong>API Health:</strong>
+                    {% if monitor.is_up == true %}
+                    <span class="text-green-600">UP</span>
+                    {% elif monitor.is_up == false %}
+                    <span class="text-red-600">DOWN</span>
+                    {% else %}
+                    <span class="text-gray-500">Unknown</span>
+                    {% endif %}
+                </p>
+                <div class="mt-4 flex justify-end gap-3">
+                    <a href="/monitors/{{ monitor.id }}/edit"
+                       class="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-xl shadow hover:bg-blue-700 transition">
+                        Edit
+                    </a>
+                    <form action="/monitors/{{ monitor.id }}/delete" method="post" class="inline">
+                        <button type="submit"
+                                class="px-4 py-1.5 bg-red-600 text-white text-sm font-medium rounded-xl shadow hover:bg-red-700 transition"
+                                onclick="return confirm('Are you sure?');">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+
         {% endif %}
     </div>
 </section>
