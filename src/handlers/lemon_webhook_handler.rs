@@ -63,17 +63,32 @@ pub async fn lemon_webhook(
         .as_str()
         .unwrap_or("unknown");
 
+    // Determine plan based on event type and status
     let plan = match event_type {
-        "subscription_cancelled" => "free",
         "subscription_created" | "subscription_updated" => {
-            let raw_plan = event["data"]["attributes"]["variant_name"]
+            let is_cancelled = event["data"]["attributes"]["status"]
                 .as_str()
-                .unwrap_or("free");
-            match raw_plan.to_lowercase().as_str() {
-                "pro" => "pro",
-                "enterprise" => "enterprise",
-                _ => "free",
+                .map(|s| s.eq_ignore_ascii_case("cancelled"))
+                .unwrap_or(false);
+
+            if is_cancelled {
+                info!("🚫 Subscription is marked as cancelled.");
+                "free"
+            } else {
+                event["data"]["attributes"]["variant_name"]
+                    .as_str()
+                    .map(|s| s.to_lowercase())
+                    .map(|s| match s.as_str() {
+                        "pro" => "pro",
+                        "enterprise" => "enterprise",
+                        _ => "free",
+                    })
+                    .unwrap_or("free")
             }
+        }
+        "subscription_cancelled" => {
+            info!("🚫 Received subscription_cancelled event.");
+            "free"
         }
         _ => {
             info!("ℹ️ Ignoring unsupported event type: {}", event_type);
@@ -83,16 +98,15 @@ pub async fn lemon_webhook(
 
     match user_id {
         Some(user_id) => {
-            info!("🔄 Attempting to update user {} to plan '{}'", user_id, plan);
+            info!("🔄 Updating user {} to plan '{}'", user_id, plan);
             let repo = UserRepository::new(&state.db);
-
             match repo.update_user_plan(user_id, plan).await {
-                Ok(_) => info!("✅ Successfully updated user {} to plan '{}' via LemonSqueezy", user_id, plan),
-                Err(e) => error!("❌ Failed to update user {} to plan '{}': {}", user_id, plan, e),
+                Ok(_) => info!("✅ Successfully updated user {} to '{}'", user_id, plan),
+                Err(e) => error!("❌ Failed to update user {} to '{}': {}", user_id, plan, e),
             }
         }
         None => {
-            error!("❌ Could not extract user_id from Lemon webhook payload.");
+            error!("❌ Could not extract user_id from webhook.");
         }
     }
 
