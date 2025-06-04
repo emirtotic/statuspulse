@@ -34,10 +34,10 @@ pub async fn lemon_webhook(
     let Some(sig_header) = headers.get(SIGNATURE_HEADER) else {
         return StatusCode::UNAUTHORIZED.into_response();
     };
-    // let sig_hex = sig_header.to_str().unwrap_or("");
-    // if !is_valid_signature(&secret, &body, sig_hex) {
-    //     return StatusCode::UNAUTHORIZED.into_response();
-    // }
+    let sig_hex = sig_header.to_str().unwrap_or("");
+    if !is_valid_signature(&secret, &body, sig_hex) {
+        return StatusCode::UNAUTHORIZED.into_response();
+    }
 
     let event: Value = match serde_json::from_slice(&body) {
         Ok(json) => json,
