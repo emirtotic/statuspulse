@@ -59,9 +59,27 @@ pub async fn lemon_webhook(
         .as_str()
         .and_then(|s| s.parse::<u64>().ok());
 
-    let plan = event["data"]["attributes"]["variant_name"]
+    let event_type = event["meta"]["event_name"]
         .as_str()
-        .unwrap_or("free");
+        .unwrap_or("unknown");
+
+    let plan = match event_type {
+        "subscription_cancelled" => "free",
+        "subscription_created" | "subscription_updated" => {
+            let raw_plan = event["data"]["attributes"]["variant_name"]
+                .as_str()
+                .unwrap_or("free");
+            match raw_plan.to_lowercase().as_str() {
+                "pro" => "pro",
+                "enterprise" => "enterprise",
+                _ => "free",
+            }
+        }
+        _ => {
+            info!("ℹ️ Ignoring unsupported event type: {}", event_type);
+            return StatusCode::OK.into_response();
+        }
+    };
 
     match user_id {
         Some(user_id) => {
@@ -80,5 +98,6 @@ pub async fn lemon_webhook(
 
     StatusCode::OK.into_response()
 }
+
 
 
