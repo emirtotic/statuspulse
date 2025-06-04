@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:1.82 as builder
+FROM docker.io/library/rust:1.82 as builder
 
 WORKDIR /app
 COPY . .
