@@ -74,7 +74,11 @@
                 <tbody class="divide-y divide-neutral-200">
                 {% for monitor in monitors %}
                 <tr class="hover:bg-neutral-50">
-                    <td class="px-4 py-4 font-medium text-gray-900 text-center">{{ monitor.label }}</td>
+                    <td class="px-4 py-4 font-medium text-center">
+                        <a href="/api/monitors/{{ monitor.id }}/logs" class="text-blue-600 hover:underline">
+                            {{ monitor.label }}
+                        </a>
+                    </td>
                     <td class="px-4 py-4 max-w-xs truncate text-center">
                         <a href="{{ monitor.url }}" target="_blank" class="text-blue-600 hover:underline">
                             {{ monitor.url | truncate(length=50, end="...") }}
@@ -115,7 +119,11 @@
             {% for monitor in monitors %}
             <div class="p-4 border border-neutral-200 rounded-xl shadow-sm bg-white">
                 <div class="flex justify-between items-center mb-2">
-                    <h3 class="text-base font-semibold">{{ monitor.label }}</h3>
+                    <h3 class="text-base font-semibold">
+                        <a href="/api/monitors/{{ monitor.id }}/logs" class="text-blue-600 hover:underline">
+                            {{ monitor.label }}
+                        </a>
+                    </h3>
                     <span class="text-xs bg-gray-100 px-2 py-0.5 rounded border font-medium">
                 {{ monitor.interval_mins }} min
             </span>

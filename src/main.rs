@@ -41,6 +41,7 @@ fn build_tera() -> Tera {
     tera.add_raw_template("login.html", include_str!("templates/login.html")).unwrap();
     tera.add_raw_template("register.html", include_str!("templates/register.html")).unwrap();
     tera.add_raw_template("reset_password.html", include_str!("templates/reset_password.html")).unwrap();
+    tera.add_raw_template("monitor_logs.html", include_str!("templates/monitor_logs.html")).unwrap();
 
     tera
 }

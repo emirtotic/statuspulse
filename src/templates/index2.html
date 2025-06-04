@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="canonical" href="https://statuspulse.app" />
+    <meta name="description" content="StatusPulse is the fastest way to monitor your APIs and get real-time outage alerts.">
+    <meta name="keywords" content="API monitoring, uptime alerts, status page, StatusPulse">
+    <meta name="author" content="Emir Totić">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:title" content="StatusPulse – API Monitoring and Alerts" />
+    <meta property="og:description" content="Get notified instantly when your APIs go down. Start free in minutes." />
+    <meta property="og:image" content="https://statuspulse.app/static/images/og-preview.png" />
+    <meta property="og:url" content="https://statuspulse.app" />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="StatusPulse – API Monitoring and Alerts" />
+    <meta name="twitter:description" content="Real-time API monitoring, fast alerts, and simple setup." />
+    <meta name="twitter:image" content="https://statuspulse.app/static/images/og-preview.png" />
+    <title>StatusPulse</title>
+    <link rel="shortcut icon" href="/static/images/favicon.png" type="image/png">
+    <link rel="icon" href="/static/images/favicon.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-white text-neutral-900 flex flex-col min-h-screen">
+
+<!-- Navbar -->
+<header class="w-full fixed top-0 z-50 bg-gray-200 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-1 flex justify-between items-center">
+        <a href="/" class="flex items-center space-x-2">
+            <img src="/static/images/logo.png" alt="StatusPulse Logo" class="h-14 w-auto object-contain">
+        </a>
+        <div class="hidden sm:flex items-center space-x-3">
+            {% if current_user is defined %}
+            <a href="/dashboard" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Dashboard</a>
+            <a href="/#features" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">About</a>
+            <a href="/#contact" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-xl shadow hover:bg-yellow-600 transition">Contact</a>
+            <a href="/logout" class="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition">Logout</a>
+            {% else %}
+            <a href="/#features" class="px-4 py-2 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">About</a>
+            <a href="/#contact" class="px-4 py-2 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">Contact</a>
+            <a href="/login" class="px-4 py-2 text-sm font-medium bg-yellow-500 text-black rounded-xl shadow hover:bg-yellow-600 transition">Login</a>
+            <a href="/register" class="px-4 py-2 text-sm font-medium border bg-neutral-100 border-black text-black rounded-xl hover:bg-yellow-500 transition">Register</a>
+            {% endif %}
+        </div>
+    </div>
+</header>
+
+<!-- Spacer to push content below fixed navbar -->
+<div class="h-10"></div>
+
+<!-- Hero Section -->
+<section class="py-24 bg-gray-100 text-center">
+    <div class="max-w-7xl mx-auto px-4">
+        <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight">Monitor Your APIs with Confidence</h1>
+        <p class="mt-4 text-lg text-gray-600">Get notified the moment something breaks — StatusPulse alerts you instantly when your APIs fail, so you can act before users notice.</p>
+        <div class="mt-8 flex justify-center gap-4">
+            {% if current_user is defined %}
+            <a href="/dashboard" class="px-6 py-3 bg-black text-white text-lg font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Go to Dashboard</a>
+            {% else %}
+            <a href="/register" class="px-6 py-3 bg-black text-white text-lg font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Get Started</a>
+            <a href="#features" class="px-6 py-3 bg-yellow-500 border-gray-300 text-lg font-medium rounded-xl hover:bg-yellow-600 transition">Learn More</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+        <h2 class="text-3xl font-extrabold tracking-tight">Why StatusPulse?</h2>
+        <div class="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="p-6 bg-gray-100 rounded-2xl shadow-md hover:shadow-lg transition">
+                <h3 class="text-xl font-semibold">Real-time Alerts</h3>
+                <p class="mt-2 text-gray-600">Get notified via email the moment your APIs start failing. No more discovering issues through angry customers — you’re always the first to know.</p>
+            </div>
+            <div class="p-6 bg-gray-100 rounded-2xl shadow-md hover:shadow-lg transition">
+                <h3 class="text-xl font-semibold">Easy Setup</h3>
+                <p class="mt-2 text-gray-600">No complex configs. Start monitoring within minutes with a clean dashboard.</p>
+            </div>
+            <div class="p-6 bg-gray-100 rounded-2xl shadow-md hover:shadow-lg transition">
+                <h3 class="text-xl font-semibold">Support Independent Development</h3>
+                <p class="mt-2 text-gray-600">StatusPulse is an indie product — registering for free helps support ongoing development and improvements.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About -->
+<section class="py-20 bg-gray-100 text-center">
+    <div class="max-w-5xl mx-auto px-6">
+        <h2 class="text-3xl sm:text-4xl font-extrabold mb-4">Never Let API Downtime Surprise You Again</h2>
+        <p class="mt-4 text-lg text-gray-600">
+            Get instant alerts, effortless setup, and a clean dashboard to track the health of your APIs.
+            Whether you're monitoring one service or managing infrastructure at scale, StatusPulse gives you clarity and control — without enterprise complexity or inflated pricing.
+        </p>
+        <p class="mt-6 text-lg text-gray-700 leading-relaxed">
+            Built for modern teams & developers.
+            Gain full visibility into your APIs, receive timely alerts, and make confident decisions — all without enterprise complexity or inflated pricing.
+        </p>
+        <div class="mt-8">
+            {% if current_user is defined %}
+            <a href="/dashboard" class="inline-block px-6 py-3 bg-black text-white font-semibold rounded-xl shadow hover:bg-yellow-600 transition">
+                Go to Your APIs →
+            </a>
+            {% else %}
+            <a href="/register" class="inline-block px-6 py-3 bg-yellow-500 text-black font-semibold rounded-xl shadow hover:bg-yellow-600 transition">
+                Start Monitoring in Minutes →
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+
+<!-- Pricing Section -->
+<section id="pricing" class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+        <h2 class="text-3xl font-extrabold tracking-tight">Flexible Pricing for All</h2>
+        <p class="mt-4 text-lg text-gray-600">Simple and transparent pricing, no hidden fees.</p>
+
+        <div class="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
+            <!-- Free Plan -->
+            <div class="flex flex-col justify-between p-6 border-2 border-black rounded-2xl shadow-md hover:shadow-xl transition">
+                <div>
+                    <h3 class="text-xl font-semibold">Free</h3>
+                    <p class="mt-2 text-3xl font-bold">$0<span class="text-lg font-normal">/month</span></p>
+                    <ul class="mt-4 space-y-2 text-gray-600">
+                        <li>✅ 2 Monitors</li>
+                        <li>✅ Email Alerts</li>
+                        <li>✅ Minimum check interval: <strong>15 minutes</strong></li>
+                        <li>❌ No log history</li>
+                    </ul>
+                </div>
+                <div class="mt-6">
+                    {% if user_plan == "pro" or user_plan == "enterprise" %}
+                    <span class="inline-block w-full text-center px-6 py-3 bg-gray-200 text-gray-600 font-medium rounded-xl shadow">
+                    Included in your plan
+                </span>
+                    {% elif user_plan == "free" %}
+                    <a href="/dashboard" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
+                        Go to Dashboard
+                    </a>
+                    {% else %}
+                    <a href="/register" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
+                        Get Free Plan
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Pro Plan -->
+            <div class="flex flex-col justify-between p-6 border-2 border-black rounded-2xl shadow-md hover:shadow-xl transition">
+                <div>
+                    <h3 class="text-xl font-semibold">Pro</h3>
+                    <p class="mt-2 text-3xl font-bold">$5<span class="text-lg font-normal">/month</span></p>
+                    <ul class="mt-4 space-y-2 text-gray-600">
+                        <li>✅ 15 Monitors</li>
+                        <li>✅ Email Alerts</li>
+                        <li>✅ Minimum check interval: <strong>5 minutes</strong></li>
+                        <li>✅ Basic log history (7 days)</li>
+                        <li>✅ Support</li>
+                    </ul>
+                </div>
+                <div class="mt-6">
+                    {% if user_plan == "pro" %}
+                    <a href="/dashboard" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
+                        Go to Dashboard
+                    </a>
+                    {% elif user_plan == "enterprise" %}
+                    <span class="inline-block w-full text-center px-6 py-3 bg-gray-200 text-gray-600 font-medium rounded-xl shadow">
+                    Included in your plan
+                </span>
+                    {% else %}
+                    <a href="/checkout/pro" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
+                        Upgrade to Pro →
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Enterprise Plan -->
+            <div class="flex flex-col justify-between p-6 border-2 border-black rounded-2xl shadow-md hover:shadow-xl transition">
+                <div>
+                    <h3 class="text-xl font-semibold">Enterprise</h3>
+                    <p class="mt-2 text-3xl font-bold">$20<span class="text-lg font-normal">/month</span></p>
+                    <ul class="mt-4 space-y-2 text-gray-600">
+                        <li>✅ Unlimited Monitors</li>
+                        <li>✅ Email Alerts</li>
+                        <li>✅ Minimum check interval: <strong>1 minute</strong></li>
+                        <li>✅ Full log history (30+ days)</li>
+                        <li>✅ SLA reports / Uptime reports (PDF/CSV)</li>
+                        <li>✅ Priority Support</li>
+                    </ul>
+                </div>
+                <div class="mt-6">
+                    {% if user_plan == "enterprise" %}
+                    <a href="/dashboard" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
+                        Go to Dashboard
+                    </a>
+                    {% else %}
+                    <a href="/checkout/enterprise" class="inline-block w-full px-6 py-3 bg-black text-white font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">
+                        Upgrade to Enterprise →
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</section>
+
+<!-- Call to Action Section -->
+<section class="py-20 bg-gray-900 text-white text-center">
+    <div class="max-w-3xl mx-auto px-4">
+        {% if current_user is defined %}
+        <h2 class="text-3xl font-extrabold tracking-tight">You're All Set!</h2>
+        <p class="mt-4 text-lg text-gray-300">
+            Your account is active — you can now access your dashboard, create monitors, receive instant downtime alerts, and stay notified about your service health.
+        </p>
+        <div class="mt-8 flex justify-center">
+            <a href="/dashboard" class="px-6 py-3 bg-yellow-500 text-black text-lg font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Go to Dashboard</a>
+        </div>
+        {% else %}
+        <h2 class="text-3xl font-extrabold tracking-tight">Start Monitoring in Minutes</h2>
+        <p class="mt-4 text-lg text-gray-300">
+            Join StatusPulse and never be the last to know when your APIs go down.
+        </p>
+        <div class="mt-8 flex justify-center gap-4">
+            <a href="/register" class="px-6 py-3 bg-yellow-500 text-black text-lg font-medium rounded-xl shadow-md hover:bg-yellow-600 transition">Get Started Free</a>
+            <a href="#pricing" class="px-6 py-3 border border-white text-lg font-medium rounded-xl hover:bg-white hover:text-black transition">View Pricing</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section id="contact" class="py-20 bg-yellow-500 border-t border-neutral-200">
+    <div class="max-w-xl mx-auto px-4">
+        <h2 class="text-3xl font-bold text-gray-900 text-center">
+            Have a question or want to reach out?
+        </h2>
+        <p class="mt-4 text-gray-900 text-center">
+            We’d love to hear from you. Whether it’s feedback, a bug, or just to say hi — drop us a line!
+        </p>
+
+        {% if flash %}
+        <div data-flash
+             class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-xl shadow-lg z-50 opacity-100 transition-opacity duration-500">
+            {{ flash }}
+        </div>
+        {% endif %}
+
+        <form method="post" action="/contact" class="mt-8 space-y-5">
+            {% if current_user is defined %}
+            <input type="hidden" name="name" value="{{ user_name }}">
+            <input type="hidden" name="email" value="{{ user_email }}">
+            {% else %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Your Name</label>
+                <input type="text" name="name" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Your Email</label>
+                <input type="email" name="email" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            {% endif %}
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Message</label>
+                <textarea name="message" rows="5" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+
+            <!-- Honeypot -->
+            <div style="display: none;">
+                <label>Leave this field empty</label>
+                <input type="text" name="website" autocomplete="off">
+            </div>
+
+            <!-- reCAPTCHA -->
+            <div class="flex justify-center">
+                <div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_SITE_KEY }}"></div>
+            </div>
+
+            <div class="text-center">
+                <button type="submit" class="mt-4 px-6 py-3 bg-gray-900 text-white font-medium rounded-xl hover:bg-yellow-600 transition">
+                    Send Message
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- reCAPTCHA script -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+<!-- Flash auto-dismiss logic -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const flash = document.querySelector('[data-flash]');
+        if (flash) {
+            setTimeout(() => {
+                flash.classList.add('opacity-0');
+                setTimeout(() => flash.remove(), 500);
+            }, 5000);
+        }
+    });
+</script>
+
+
+<!-- Footer -->
+<footer class="w-full bg-gray-900 border-t border-neutral-200 py-6 text-center text-sm text-gray-50 mt-auto">
+    <div class="flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto px-6">
+        <p>StatusPulse &copy; {{ now() | date(format="%Y") }}</p>
+        <p>
+            Reliable API Monitoring, built and maintained by
+            <a href="https://emirtotic.github.io/portfolio-site/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
+                Emir Totić
+            </a>
+        </p>
+    </div>
+</footer>
+
+</body>
+</html>

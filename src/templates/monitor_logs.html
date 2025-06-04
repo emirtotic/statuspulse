@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}StatusPulse - Monitor Logs{% endblock title %}
+
+{% block content %}
+<section class="pt-10 pb-20 bg-gray-50 text-center">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Back to Dashboard + Change Password -->
+        <div class="flex justify-end mb-6">
+            <div class="flex flex-row items-center gap-3">
+                <a href="/dashboard"
+                   class="px-4 py-1.5 text-xs font-semibold bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition shadow-sm whitespace-nowrap">
+                    ← Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+
+        <h1 class="text-xl sm:text-4xl font-extrabold tracking-tight mb-6">
+            Monitor Logs: {{ monitor.label }}
+        </h1>
+
+        <!-- Export to PDF -->
+        <div class="flex justify-center mb-6">
+            <button onclick="exportToPDF()" class="px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition">
+                📄 Export to PDF
+            </button>
+        </div>
+
+        <!-- Chart -->
+        <div class="my-10" style="height:300px">
+            <canvas id="statusChart" height="100"></canvas>
+        </div>
+
+        {% if logs | length == 0 %}
+        <div class="bg-yellow-50 text-yellow-500 border border-yellow-200 rounded-xl p-6">
+            <p>No status logs found for this monitor.</p>
+        </div>
+        {% else %}
+        <!-- Logs Table -->
+        <div class="overflow-x-auto rounded-2xl border border-neutral-200 shadow-lg mt-8">
+            <table id="log-table" class="min-w-full bg-white text-sm">
+                <thead class="bg-yellow-500 text-neutral-700 uppercase text-xs font-semibold">
+                <tr>
+                    <th class="px-4 py-3 text-center">Checked At</th>
+                    <th class="px-4 py-3 text-center">Status Code</th>
+                    <th class="px-4 py-3 text-center">Response Time (ms)</th>
+                    <th class="px-4 py-3 text-center">Status</th>
+                </tr>
+                </thead>
+                <tbody id="log-table-body" class="divide-y divide-neutral-200">
+                {% for log in logs %}
+                <tr>
+                    <td class="text-center">{{ log.checked_at }}</td>
+                    <td class="text-center">{{ log.response_code | default(value="None") }}</td>
+                    <td class="text-center">{{ log.response_time_ms | default(value="Unknown") }}</td>
+                    <td class="text-center">
+                        {% if log.is_success %}
+                        UP
+                        {% else %}
+                        DOWN
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+    const labels = {{ chart_labels | json_encode() | safe }};
+    const dataPoints = {{ response_times | json_encode() | safe }};
+    const monitorLabel = "{{ monitor.label | escape }}";
+
+    new Chart(document.getElementById('statusChart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Response Time (ms)',
+                data: dataPoints,
+                borderColor: 'rgba(255, 205, 86, 1)',
+                backgroundColor: 'rgba(255, 205, 86, 0.2)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Checked At'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Response Time (ms)'
+                    }
+                }
+            }
+        }
+    });
+
+    async function exportToPDF() {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF("p", "mm", "a4");
+        const margin = 10;
+        const pageWidth = pdf.internal.pageSize.getWidth() - margin * 2;
+
+        // ➕ Dodaj naslov monitora
+        pdf.setFontSize(16);
+        pdf.setFont("helvetica", "bold");
+        pdf.text("Monitor Logs: {{ monitor.label }}", margin, 20);
+
+        // 📊 Chart
+        const chartCanvas = await html2canvas(document.getElementById("statusChart"), {
+            scale: 2,
+            useCORS: true,
+            scrollY: -window.scrollY,
+        });
+        const chartImg = chartCanvas.toDataURL("image/png");
+        const chartHeight = (chartCanvas.height * pageWidth) / chartCanvas.width;
+
+        // Pozicija grafa ispod naslova (naslov je na Y=20)
+        const chartY = 30;
+        pdf.addImage(chartImg, "PNG", margin, chartY, pageWidth, chartHeight);
+
+        const startY = chartY + chartHeight + 10;
+        const headers = [["Checked At", "Status Code", "Response Time (ms)", "Status"]];
+        const body = Array.from(document.querySelectorAll("#log-table-body tr")).map(row =>
+            Array.from(row.querySelectorAll("td")).map(td => td.innerText.trim())
+        );
+
+        pdf.autoTable({
+            head: headers,
+            body: body,
+            startY: startY,
+            margin: { left: margin, right: margin },
+            styles: {
+                fontSize: 9,
+                cellPadding: 3,
+                halign: 'center',
+            },
+            headStyles: {
+                fillColor: [240, 240, 240],
+                textColor: 0,
+                fontStyle: "bold",
+                halign: 'center',
+                valign: 'middle',
+            },
+            didDrawPage: function (data) {
+                // Možeš dodati footer ili paginaciju ovde ako želiš
+            }
+        });
+
+        pdf.save("monitor_logs.pdf");
+    }
+
+</script>
+{% endblock content %}

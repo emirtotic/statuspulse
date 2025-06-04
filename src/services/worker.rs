@@ -75,35 +75,40 @@ pub async fn start_worker(state: AppState) {
                                     let status_code = resp.status().as_u16() as i32;
                                     info!("Monitor {} responded with {} in {}ms", url, status_code, duration_ms);
 
+                                    let last_log = status_log_repo.get_last_status_log(monitor_id).await.ok().flatten();
+                                    let was_down = last_log.map(|log| !log.is_success).unwrap_or(false);
+
                                     let _ = status_log_repo.insert_log(
                                         monitor_id,
                                         Some(status_code),
                                         Some(duration_ms),
                                         true,
-                                        None,
+                                        if was_down { Some("Monitor recovered".to_string()) } else { None },
                                     ).await;
 
                                     let _ = monitor_repo.update_is_up(monitor_id, true).await;
 
-                                    if let Ok(Some(user)) = monitor_repo.get_monitor_owner(monitor_id).await {
-                                        if let Ok(false) = alerts_repo.was_recently_sent(monitor_id, "email", "up", since).await {
-                                            let subject = format!("Monitor RECOVERED: {}", monitor.label);
-                                            let replacements = &[
-                                                ("USER_NAME", user.name.as_str()),
-                                                ("MONITOR_LABEL", monitor.label.as_str()),
-                                                ("MONITOR_URL", monitor.url.as_str()),
-                                            ];
+                                    if was_down {
+                                        if let Ok(Some(user)) = monitor_repo.get_monitor_owner(monitor_id).await {
+                                            if let Ok(false) = alerts_repo.was_recently_sent(monitor_id, "email", "up", since).await {
+                                                let subject = format!("Monitor RECOVERED: {}", monitor.label);
+                                                let replacements = &[
+                                                    ("USER_NAME", user.name.as_str()),
+                                                    ("MONITOR_LABEL", monitor.label.as_str()),
+                                                    ("MONITOR_URL", monitor.url.as_str()),
+                                                ];
 
-                                            if let Err(e) = sendgrid_service
-                                                .send_alert(
-                                                    &user.email,
-                                                    &subject,
-                                                    "src/services/email_templates/email_monitor_up.html",
-                                                    replacements,
-                                                ).await {
-                                                error!("Failed to send recovery email: {:?}", e);
-                                            } else {
-                                                let _ = alerts_repo.insert_alert(monitor_id, "email", "sendgrid", "up").await;
+                                                if let Err(e) = sendgrid_service
+                                                    .send_alert(
+                                                        &user.email,
+                                                        &subject,
+                                                        "src/services/email_templates/email_monitor_up.html",
+                                                        replacements,
+                                                    ).await {
+                                                    error!("Failed to send recovery email: {:?}", e);
+                                                } else {
+                                                    let _ = alerts_repo.insert_alert(monitor_id, "email", "sendgrid", "up").await;
+                                                }
                                             }
                                         }
                                     }
@@ -156,8 +161,8 @@ pub async fn start_worker(state: AppState) {
                 }
             }
 
-            info!("Sleeping 900 seconds before next cycle...");
-            sleep(Duration::from_secs(900)).await;
+            info!("Sleeping 60 seconds before next cycle...");
+            sleep(std::time::Duration::from_secs(60)).await;
         }
     });
 }

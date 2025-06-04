@@ -73,8 +73,8 @@ impl<'a> StatusLogRepository<'a> {
                 id: row.try_get("id").unwrap(),
                 monitor_id: row.try_get("monitor_id").unwrap(),
                 checked_at: row.try_get("checked_at").unwrap(),
-                response_code: row.try_get("response_code").ok(),
-                response_time_ms: row.try_get("response_time_ms").ok(),
+                response_code: row.try_get::<i32, _>("response_code").ok(),
+                response_time_ms: row.try_get::<i32, _>("response_time_ms").ok(),
                 is_success: row.try_get("is_success").unwrap(),
                 error_msg: row.try_get("error_msg").ok(),
             }

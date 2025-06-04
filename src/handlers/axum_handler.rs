@@ -1,6 +1,6 @@
 use axum::{response::Html, Extension, Form};
 use axum_extra::extract::cookie::{Cookie, CookieJar};
-use tera::Tera;
+use tera::{Context, Tera};
 
 use crate::db::user_repository::UserRepository;
 use crate::models::monitor::{EditMonitorForm, MonitorStatusSummary};
@@ -12,6 +12,7 @@ use axum::response::Response;
 use axum::{extract::State, response::Redirect};
 use http::{header, HeaderValue, StatusCode};
 use serde::{Deserialize};
+use time::format_description::parse;
 use crate::services::sendgrid_service::SendGridService;
 
 #[derive(Deserialize)]
@@ -593,7 +594,7 @@ pub async fn submit_contact_form(
         return (jar.add(flash_cookie), Redirect::to("/")).into_response();
     }
 
-    let subject = format!("📬 New Contact Message from {}", form.name);
+    let subject = format!("New Contact Message from {}", form.name);
     let body = format!(
         "<h2>New Contact Submission</h2>\
         <p><strong>Name:</strong> {}</p>\
@@ -616,7 +617,7 @@ pub async fn submit_contact_form(
         return (jar.add(flash_cookie), Redirect::to("/")).into_response();
     }
 
-    tracing::info!("✅ Contact message sent to {}", contact_receiver);
+    tracing::info!("Contact message sent to {}", contact_receiver);
 
     let mut flash_cookie = Cookie::new("flash", "Thanks for reaching out! We'll get back to you soon.");
     flash_cookie.set_path("/");
@@ -624,6 +625,88 @@ pub async fn submit_contact_form(
 
     (jar.add(flash_cookie), Redirect::to("/")).into_response()
 }
+
+#[axum::debug_handler]
+pub async fn view_monitor_logs(
+    State(state): State<AppState>,
+    Extension(tera): Extension<tera::Tera>,
+    Path(monitor_id): Path<u64>,
+    jar: CookieJar,
+) -> impl IntoResponse {
+
+    let token = match jar.get("auth_token") {
+        Some(cookie) => cookie.value().to_string(),
+        None => return Redirect::to("/login").into_response(),
+    };
+
+    let user_id = match jwt_auth::decode_token(&token, &state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => return Redirect::to("/login").into_response(),
+    };
+
+    let monitor_repo = MonitorRepository::new(&state.db);
+    let status_log_repo = crate::db::status_log_repository::StatusLogRepository::new(&state.db);
+    let user_repo = UserRepository::new(&state.db);
+
+    let monitor = match monitor_repo.get_monitor_by_id(monitor_id, user_id).await {
+        Ok(Some(m)) => m,
+        _ => return Redirect::to("/dashboard").into_response(),
+    };
+
+    let user = match user_repo.get_user_by_id(user_id).await {
+        Ok(Some(u)) => u,
+        _ => return Redirect::to("/login").into_response(),
+    };
+
+    let logs = match status_log_repo.get_logs_by_monitor(monitor_id, 100).await {
+        Ok(logs) => logs,
+        Err(_) => vec![],
+    };
+
+    // 🕒 Format vremena (HH:MM)
+    let time_format = parse("[hour]:[minute]").unwrap_or_else(|_| {
+        panic!("Failed to parse time format for chart labels");
+    });
+
+    let chart_labels: Vec<String> = logs
+        .iter()
+        .map(|log| log.checked_at
+            .map(|dt| dt.format(&time_format).unwrap_or_else(|_| "??:??".to_string()))
+            .unwrap_or_else(|| "??:??".to_string()))
+        .collect();
+
+
+    // 📊 Response time (u32)
+    let response_times: Vec<u32> = logs
+        .iter()
+        .map(|log| log.response_time_ms.unwrap_or(0).max(0) as u32)
+        .collect();
+
+    // 🧠 Kontekst za Tera šablon
+    let mut ctx = Context::new();
+    ctx.insert("logs", &logs);
+    ctx.insert("monitor", &monitor);
+    ctx.insert("current_user", &user_id);
+    ctx.insert("user_name", &user.name);
+    ctx.insert("user_plan", &user.plan);
+    ctx.insert("chart_labels", &chart_labels);
+    ctx.insert("response_times", &response_times);
+
+    // 🧩 Render
+    match tera.render("monitor_logs.html", &ctx) {
+        Ok(rendered) => html_no_cache(Html(rendered)),
+        Err(err) => {
+            tracing::error!("Template error: {:?}", err);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Template rendering failed".to_string(),
+            )
+                .into_response()
+        }
+    }
+}
+
+
 
 fn html_no_cache(body: Html<String>) -> Response {
     let mut res = body.into_response();
