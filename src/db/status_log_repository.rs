@@ -167,32 +167,41 @@ impl<'a> StatusLogRepository<'a> {
         monitor_id: u64,
         since: OffsetDateTime,
     ) -> Result<Vec<StatusLog>, sqlx::Error> {
-        let rows = sqlx::query!(
+        tracing::info!("Fetching logs for monitor_id {} since {:?}", monitor_id, since);
+
+        let rows = sqlx::query(
             r#"
-            SELECT id, monitor_id, checked_at, response_code, response_time_ms, is_success, error_msg
-            FROM status_logs
-            WHERE monitor_id = ? AND checked_at >= ?
-            ORDER BY checked_at DESC
-            "#,
+        SELECT
+            id,
             monitor_id,
-            since
+            checked_at,
+            response_code,
+            response_time_ms,
+            is_success,
+            error_msg
+        FROM status_logs
+        WHERE monitor_id = ? AND checked_at >= ?
+        ORDER BY checked_at DESC
+        "#
         )
+            .bind(monitor_id)
+            .bind(since)
             .fetch_all(self.pool)
             .await?;
 
-        let logs = rows
-            .into_iter()
-            .map(|row| StatusLog {
-                id: row.id,
-                monitor_id: row.monitor_id,
-                checked_at: Option::from(row.checked_at),
-                response_code: row.response_code,
-                response_time_ms: row.response_time_ms,
-                is_success: row.is_success != 0,
-                error_msg: row.error_msg,
-            })
-            .collect();
+        let logs = rows.into_iter().map(|row| {
+            StatusLog {
+                id: row.try_get("id").unwrap(),
+                monitor_id: row.try_get("monitor_id").unwrap(),
+                checked_at: row.try_get("checked_at").unwrap(),
+                response_code: row.try_get::<i32, _>("response_code").ok(),
+                response_time_ms: row.try_get::<i32, _>("response_time_ms").ok(),
+                is_success: row.try_get("is_success").unwrap(),
+                error_msg: row.try_get("error_msg").ok(),
+            }
+        }).collect();
 
         Ok(logs)
     }
+
 }
