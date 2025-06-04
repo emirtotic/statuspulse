@@ -1,5 +1,6 @@
 use crate::models::status_log::StatusLog;
 use sqlx::{MySqlPool, Row};
+use time::OffsetDateTime;
 
 pub struct StatusLogRepository<'a> {
     pub pool: &'a MySqlPool,
@@ -161,8 +162,37 @@ impl<'a> StatusLogRepository<'a> {
         Ok(avg_response_time)
     }
 
+    pub async fn get_logs_since(
+        &self,
+        monitor_id: u64,
+        since: OffsetDateTime,
+    ) -> Result<Vec<StatusLog>, sqlx::Error> {
+        let rows = sqlx::query!(
+            r#"
+            SELECT id, monitor_id, checked_at, response_code, response_time_ms, is_success, error_msg
+            FROM status_logs
+            WHERE monitor_id = ? AND checked_at >= ?
+            ORDER BY checked_at DESC
+            "#,
+            monitor_id,
+            since
+        )
+            .fetch_all(self.pool)
+            .await?;
 
+        let logs = rows
+            .into_iter()
+            .map(|row| StatusLog {
+                id: row.id,
+                monitor_id: row.monitor_id,
+                checked_at: Option::from(row.checked_at),
+                response_code: row.response_code,
+                response_time_ms: row.response_time_ms,
+                is_success: row.is_success != 0,
+                error_msg: row.error_msg,
+            })
+            .collect();
 
-
-
+        Ok(logs)
+    }
 }

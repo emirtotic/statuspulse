@@ -75,9 +75,13 @@
                 {% for monitor in monitors %}
                 <tr class="hover:bg-neutral-50">
                     <td class="px-4 py-4 font-medium text-center">
+                        {% if user_plan != "free" %}
                         <a href="/api/monitors/{{ monitor.id }}/logs" class="text-blue-600 hover:underline">
                             {{ monitor.label }}
                         </a>
+                        {% else %}
+                        <span class="text-gray-700">{{ monitor.label }}</span>
+                        {% endif %}
                     </td>
                     <td class="px-4 py-4 max-w-xs truncate text-center">
                         <a href="{{ monitor.url }}" target="_blank" class="text-blue-600 hover:underline">
@@ -120,9 +124,13 @@
             <div class="p-4 border border-neutral-200 rounded-xl shadow-sm bg-white">
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="text-base font-semibold">
+                        {% if user_plan != "free" %}
                         <a href="/api/monitors/{{ monitor.id }}/logs" class="text-blue-600 hover:underline">
                             {{ monitor.label }}
                         </a>
+                        {% else %}
+                        <span class="text-gray-700">{{ monitor.label }}</span>
+                        {% endif %}
                     </h3>
                     <span class="text-xs bg-gray-100 px-2 py-0.5 rounded border font-medium">
                 {{ monitor.interval_mins }} min

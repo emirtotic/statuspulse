@@ -13,6 +13,7 @@ use axum::{extract::State, response::Redirect};
 use http::{header, HeaderValue, StatusCode};
 use serde::{Deserialize};
 use time::format_description::parse;
+use time::OffsetDateTime;
 use crate::services::sendgrid_service::SendGridService;
 
 #[derive(Deserialize)]
@@ -397,7 +398,7 @@ pub async fn create_monitor_form(
     // Check if user can create more monitors based on plan
     let allowed = match user_plan.as_str() {
         "free" => monitor_count < 2,
-        "pro" => monitor_count < 15,
+        "pro" => monitor_count < 10,
         "enterprise" => true,
         _ => false,
     };
@@ -658,12 +659,37 @@ pub async fn view_monitor_logs(
         _ => return Redirect::to("/login").into_response(),
     };
 
-    let logs = match status_log_repo.get_logs_by_monitor(monitor_id, 100).await {
-        Ok(logs) => logs,
-        Err(_) => vec![],
+    use chrono::{Duration, Utc};
+
+    let logs = match user.plan.as_str() {
+        "free" => vec![],
+
+        "pro" => {
+            let seven_days_ago = Utc::now() - Duration::days(7);
+            let seven_days_ago_odt = OffsetDateTime::from_unix_timestamp(seven_days_ago.timestamp())
+                .unwrap_or_else(|_| OffsetDateTime::now_utc());
+
+            match status_log_repo.get_logs_since(monitor_id, seven_days_ago_odt).await {
+                Ok(logs) => logs,
+                Err(_) => vec![],
+            }
+        }
+
+        "enterprise" => {
+            let thirty_days_ago = Utc::now() - Duration::days(30);
+            let thirty_days_ago_odt = OffsetDateTime::from_unix_timestamp(thirty_days_ago.timestamp())
+                .unwrap_or_else(|_| OffsetDateTime::now_utc());
+
+            match status_log_repo.get_logs_since(monitor_id, thirty_days_ago_odt).await {
+                Ok(logs) => logs,
+                Err(_) => vec![],
+            }
+        }
+
+        _ => vec![],
     };
 
-    // 🕒 Format vremena (HH:MM)
+
     let time_format = parse("[hour]:[minute]").unwrap_or_else(|_| {
         panic!("Failed to parse time format for chart labels");
     });
@@ -676,13 +702,11 @@ pub async fn view_monitor_logs(
         .collect();
 
 
-    // 📊 Response time (u32)
     let response_times: Vec<u32> = logs
         .iter()
         .map(|log| log.response_time_ms.unwrap_or(0).max(0) as u32)
         .collect();
 
-    // 🧠 Kontekst za Tera šablon
     let mut ctx = Context::new();
     ctx.insert("logs", &logs);
     ctx.insert("monitor", &monitor);
@@ -692,7 +716,6 @@ pub async fn view_monitor_logs(
     ctx.insert("chart_labels", &chart_labels);
     ctx.insert("response_times", &response_times);
 
-    // 🧩 Render
     match tera.render("monitor_logs.html", &ctx) {
         Ok(rendered) => html_no_cache(Html(rendered)),
         Err(err) => {
