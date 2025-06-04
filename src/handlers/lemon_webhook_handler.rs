@@ -10,6 +10,7 @@ use sha2::Sha256;
 use std::env;
 use serde_json::Value;
 use tracing::info;
+use tracing::{error, warn};
 use crate::db::user_repository::UserRepository;
 
 type HmacSha256 = Hmac<Sha256>;
@@ -29,34 +30,55 @@ pub async fn lemon_webhook(
     headers: HeaderMap,
     body: Bytes,
 ) -> impl IntoResponse {
+    info!("📬 Lemon webhook received.");
+
     let secret = env::var("LEMON_WEBHOOK_SECRET").unwrap_or_default();
 
     let Some(sig_header) = headers.get(SIGNATURE_HEADER) else {
+        warn!("🚫 Missing X-Signature header in Lemon webhook.");
         return StatusCode::UNAUTHORIZED.into_response();
     };
+
     let sig_hex = sig_header.to_str().unwrap_or("");
     if !is_valid_signature(&secret, &body, sig_hex) {
+        warn!("🚫 Invalid Lemon webhook signature.");
         return StatusCode::UNAUTHORIZED.into_response();
     }
 
     let event: Value = match serde_json::from_slice(&body) {
         Ok(json) => json,
-        Err(_) => return StatusCode::BAD_REQUEST.into_response(),
+        Err(err) => {
+            error!("❌ Failed to parse Lemon webhook JSON: {}", err);
+            return StatusCode::BAD_REQUEST.into_response();
+        }
     };
 
-    let user_id = event["meta"]["custom_data"]["user_id"].as_str()
+    info!("✅ Webhook payload: {:?}", event);
+
+    let user_id = event["meta"]["custom_data"]["user_id"]
+        .as_str()
         .and_then(|s| s.parse::<u64>().ok());
-    let plan = event["data"]["attributes"]["variant_name"].as_str().unwrap_or("free");
 
-    if let Some(user_id) = user_id {
-        let repo = UserRepository::new(&state.db);
+    let plan = event["data"]["attributes"]["variant_name"]
+        .as_str()
+        .unwrap_or("free");
 
-        match repo.update_user_plan(user_id, plan).await {
-            Ok(_) => info!("Updated user {} to plan {} via LemonSqueezy", user_id, plan),
-            Err(e) => tracing::error!("Failed to update plan: {}", e),
+    match user_id {
+        Some(user_id) => {
+            info!("🔄 Attempting to update user {} to plan '{}'", user_id, plan);
+            let repo = UserRepository::new(&state.db);
+
+            match repo.update_user_plan(user_id, plan).await {
+                Ok(_) => info!("✅ Successfully updated user {} to plan '{}' via LemonSqueezy", user_id, plan),
+                Err(e) => error!("❌ Failed to update user {} to plan '{}': {}", user_id, plan, e),
+            }
+        }
+        None => {
+            error!("❌ Could not extract user_id from Lemon webhook payload.");
         }
     }
 
     StatusCode::OK.into_response()
 }
+
 
