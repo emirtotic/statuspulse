@@ -39,4 +39,4 @@ anyhow = "1.0.98"
 sqlx = { version = "0.7", features = ["mysql", "runtime-tokio-rustls", "migrate", "time"] }
 reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
 sendgrid = { version = "0.11", features = ["async", "rustls"] }
-base64ct = "=1.7.3"
+base64ct = "<1.8.0"
