@@ -40,3 +40,4 @@ sqlx = { version = "0.7", features = ["mysql", "runtime-tokio-rustls", "migrate"
 reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
 sendgrid = { version = "0.11", features = ["async", "rustls"] }
 base64ct = "<1.8.0"
+
