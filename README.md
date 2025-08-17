@@ -7,6 +7,8 @@ StatusPulse is a lightweight uptime monitoring service for developers, freelance
 It keeps an eye on your APIs, notifies you when something breaks, and stays out of your way.  
 No bloated dashboards. No overkill enterprise nonsense. Just clean, efficient monitoring — Rust style.
 
+**Live Application:** [Status Pulse](https://statuspulse.up.railway.app/)
+
 ---
 
 ## 🚀 Features
